@@ -671,12 +671,84 @@ const DEFAULT_DB = {
   ],
   "news": [
     {
+      "id": "gnews-1795467302333-0",
+      "title": "Reciclagem transforma resíduos e a vida de recicladores em Belém",
+      "category": "Ecologia & Região",
+      "date": "22 de nov. de 2026",
+      "author": "O Liberal",
+      "featured": true,
+      "summary": "O processo também é sinônimo de geração de emprego e renda para quem atua com o reaproveitamento de materiais Na Cooperativa de Trabalho dos Catadores de Materiais Recicláveis das Águas Lindas (Cootaral), garrafas plásticas e tampinhas que antes iriam para o lixo, por exemplo, são transformadas em banquetas, porta-copos e outros tipos de móveis ecológicos. ( Foto: Foto: Thiago Gomes | O Liberal )",
+      "imageUrl": "https://www.oliberal.com/api/og-image?src=%2Fimage%2Fpolicy%3A1.1195987%3A1795087469%2FWhatsApp%2520Image%25202026-11-18%2520at%252015.41.51%2520(3).jpeg%3Ff%3D187%3A100%26w%3D1200",
+      "sourceUrl": "https://www.oliberal.com/belem/reciclagem-transforma-residuos-e-a-vida-de-recicladores-em-belem-1.1195647",
+      "isAuto": true
+    },
+    {
+      "id": "gnews-1795467303915-1",
+      "title": "Prefeitura e Itaipu Binacional entregam novo galpão de coleta seletiva em Belém",
+      "category": "Ecologia & Região",
+      "date": "18 de nov. de 2026",
+      "author": "portalolavodutra",
+      "featured": false,
+      "summary": "A obra faz parte do programa Belém pro Futuro e foi executada por Convênio entre a Prefeitura de Belém, Itaipu Binacional e Itaipu Parquetec Belém, PA - A melhoria das condições de trabalho dos catadores de materiais recicláveis é um passo importante para fortalecer a coleta seletiva, gerar renda e contribuir para uma cidade mais limpa e sustentável. Com esse objetivo, a Prefeitura de Belém entregou, nesta quarta-feira, 18, a nova Unida...",
+      "imageUrl": "https://www.portalolavodutra.com.br/uploads/6afe0f35d15fb.webp",
+      "sourceUrl": "https://www.portalolavodutra.com.br/materias/prefeitura_e_itaipu_binacional_entregam_novo_galpao_de_coleta_seletiva_em_belem",
+      "isAuto": true
+    },
+    {
+      "id": "gnews-1795467304414-2",
+      "title": "Governo do Pará fortalece reciclagem e geração de renda com entrega de equipamentos a cooperativa de catadores em Belém",
+      "category": "Ecologia & Região",
+      "date": "20 de nov. de 2026",
+      "author": "Agência Pará de Notícias",
+      "featured": false,
+      "summary": "Esteira e triturador de vidro vão melhorar as condições de trabalho da Concaves, ampliar o reaproveitamento de resíduos e criar novas oportunidades de comercialização O Governo do Pará, por meio da Secretaria de Estado de Meio Ambiente, Clima e Sustentabilidade (Semas), acompanhou, na quinta-feira (19), a entrega de uma esteira e um triturador de vidro à Cooperativa de Trabalho dos Catadores de Materiais Recicláveis de Terra Firme (Conc...",
+      "imageUrl": "https://agenciapara.com.br/midias/2026/pequenas/20261121123024-GC00080707-F00325927.webp",
+      "sourceUrl": "https://agenciapara.com.br/noticia/80707/governo-do-para-fortalece-reciclagem-e-geracao-de-renda-com-entrega-de-equipamentos-a-cooperativa-de-catadores-em-belem",
+      "isAuto": true
+    },
+    {
+      "id": "gnews-1795467304965-3",
+      "title": "Prefeitura entrega novo galpão e fortalece a coleta seletiva em Belém",
+      "category": "Ecologia & Região",
+      "date": "18 de nov. de 2026",
+      "author": "Rede Brasil",
+      "featured": false,
+      "summary": "A melhoria das condições de trabalho dos catadores de materiais recicláveis é um passo importante para fortalecer a coleta seletiva, gerar renda e contribuir para uma cidade mais limpa e sustentável. Com esse objetivo, a Prefeitura de Belém entregou, nesta quarta-feira (18), a nova Unidade de Valorização de Recicláveis (UVR) Filhos do Sol, localizada na avenida Bernardo Sayão , no bairro da Condor. O espaço foi recuperado e adaptado pel...",
+      "imageUrl": "https://str1.lnmimg.net/img/2026/11/18/0b0ab5ec0a02200bd614ab5381dc0d78.webp",
+      "sourceUrl": "https://rbtv.com.br/noticia/33222/prefeitura-entrega-novo-galpao-e-fortalece-a-coleta-seletiva-em-belem",
+      "isAuto": true
+    },
+    {
+      "id": "gnews-1795467305173-4",
+      "title": "Reciclagem gera mais de R$ 4 milhões em receitas para catadores de Belém",
+      "category": "Ecologia & Região",
+      "date": "18 de nov. de 2026",
+      "author": "DCmais",
+      "featured": false,
+      "summary": "Catadores de materiais recicláveis de Belém (PA) reciclaram mais de 3,5 mil toneladas que geraram uma receita de R$ 4 ...",
+      "imageUrl": "https://www.bing.com/th?id=ONUT.68Hv2qyw3gZNSUcTxyW4ag&pid=News",
+      "sourceUrl": "https://dcmais.com.br/parana/reciclagem-gera-mais-de-r-4-milhoes-em-receitas-para-catadores-de-belem/",
+      "isAuto": true
+    },
+    {
+      "id": "gnews-1795467305723-5",
+      "title": "Coleta seletiva chega a Batista Campos; saiba quais materiais podem ser reciclados",
+      "category": "Ecologia & Região",
+      "date": "24 de jun. de 2026",
+      "author": "globo",
+      "featured": false,
+      "summary": "Além do recolhimento domiciliar de recicláveis às quartas-feiras, os moradores contam com ecopontos e coleta gratuita de pequenos entulhos agendada por WhatsApp. Moradores do bairro de Batista Campos, em Belém , passam a contar com coleta seletiva a partir desta quarta-feira (24). O recolhimento dos materiais recicláveis será realizado todas as quartas-feiras, a partir das 7h.",
+      "imageUrl": "https://s2-g1.glbimg.com/0dPLrPt2NDiR-nTR6L7FyL-FwEQ=/1600x0/filters:format(jpeg)/https://i.s3.glbimg.com/v1/AUTH_59edd422c0c84a879bd37670ae4f538a/internal_photos/bs/2025/h/r/3IynfIQcCc54l16R3YJg/whatsapp-image-2025-03-28-at-10.54.09.jpeg",
+      "sourceUrl": "https://g1.globo.com/pa/para/noticia/2026/06/24/coleta-seletiva-chega-a-batista-campos-saiba-quais-materiais-podem-ser-reciclados.ghtml",
+      "isAuto": true
+    },
+    {
       "id": "news-1",
       "title": "Belém amplia rede de Ecopontos para reciclagem de eletrônicos e óleo",
       "category": "Infraestrutura",
       "date": "23 Nov 2026",
       "author": "Equipe ReciclaBelém",
-      "featured": true,
+      "featured": false,
       "summary": "Novos coletores nos bairros de Nazaré, Umarizal e Marco agora recebem pequenos aparelhos eletrônicos, cabos e óleo de cozinha armazenado em garrafas PET."
     },
     {
@@ -728,6 +800,13 @@ window.ReciclaDB = {
       try {
         const parsed = JSON.parse(saved);
         if (parsed && Array.isArray(parsed.points)) {
+          const hasAutoNews = (parsed.news || []).some((n) => n.isAuto || String(n.id).startsWith('gnews-'));
+          if (!hasAutoNews) {
+            const autoDefaults = DEFAULT_DB.news.filter((n) => n.isAuto || String(n.id).startsWith('gnews-'));
+            const existingManual = (parsed.news || []).map((n) => ({ ...n, featured: false }));
+            parsed.news = [...autoDefaults, ...existingManual];
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+          }
           this.data = parsed;
           return this.data;
         }
@@ -736,7 +815,20 @@ window.ReciclaDB = {
       }
     }
 
-    // 3. Usa banco inicial padrão
+    // 3. Tenta carregar data/database.json estático (útil no GitHub Pages / Live Server)
+    try {
+      const staticRes = await fetch('./data/database.json', { cache: 'no-store' });
+      if (staticRes.ok) {
+        const staticData = await staticRes.json();
+        if (staticData && Array.isArray(staticData.points)) {
+          this.data = staticData;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
+          return this.data;
+        }
+      }
+    } catch (e) {}
+
+    // 4. Usa banco inicial padrão
     this.data = JSON.parse(JSON.stringify(DEFAULT_DB));
     await this.save();
     return this.data;

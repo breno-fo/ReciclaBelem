@@ -1795,6 +1795,68 @@ const App = {
   },
 
   // --- CRUD DE NOTÍCIAS ---
+  async fetchNewsClientFallback() {
+    const queries = [
+      'reciclagem coleta seletiva Belém Pará',
+      'ecologia sustentabilidade meio ambiente Belém Ananindeua Outeiro Pará'
+    ];
+    const collected = [];
+    const seen = new Set();
+
+    for (const q of queries) {
+      try {
+        const rssUrl = `https://www.bing.com/news/search?q=${encodeURIComponent(q)}&format=rss&mkt=pt-BR`;
+        const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+        const res = await fetch(apiUrl);
+        if (!res.ok) continue;
+        const json = await res.json();
+        for (const item of json.items || []) {
+          const title = (item.title || '').trim();
+          if (!title || /Belém do Piauí|Belém de Maria|Belém do São Francisco/i.test(title)) continue;
+          const key = title.toLowerCase().slice(0, 60);
+          if (seen.has(key)) continue;
+          seen.add(key);
+
+          let sourceUrl = item.link || '';
+          try {
+            const inner = new URL(sourceUrl).searchParams.get('url');
+            if (inner && /^https?:\/\//i.test(inner)) sourceUrl = inner;
+          } catch (e) {}
+
+          let author = item.author || '';
+          if (!author && sourceUrl) {
+            try {
+              author = new URL(sourceUrl).hostname.replace(/^www\./, '');
+            } catch (e) {}
+          }
+
+          const cleanSummary = (item.description || title).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+          const dt = item.pubDate ? new Date(item.pubDate.replace(' ', 'T')) : new Date();
+          const datePt = Number.isNaN(dt.getTime())
+            ? new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+            : dt.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+
+          collected.push({
+            id: `gnews-${Date.now()}-${collected.length}`,
+            title,
+            category: 'Ecologia & Região',
+            date: datePt,
+            author: author || 'Portal de Notícias',
+            featured: collected.length === 0,
+            summary: cleanSummary || title,
+            imageUrl: item.thumbnail || item.enclosure?.link || '',
+            sourceUrl,
+            isAuto: true
+          });
+          if (collected.length >= 6) break;
+        }
+      } catch (e) {}
+      if (collected.length >= 6) break;
+    }
+
+    return collected;
+  },
+
   async refreshNewsFromServer() {
     const btn = document.getElementById('btn-refresh-news');
     if (btn) {
@@ -1809,11 +1871,26 @@ const App = {
         await ReciclaDB.save();
         this.renderAll();
         this.showToast(`📰 ${data.added} notícias atualizadas (${data.withImages} com foto)!`);
+        return;
+      }
+      throw new Error('Servidor indisponível');
+    } catch (e) {
+      // Fallback direto no navegador (funciona sem Node.js, em file:// ou GitHub Pages)
+      const fetched = await this.fetchNewsClientFallback();
+      if (fetched.length > 0) {
+        const manualNews = (ReciclaDB.data.news || []).filter(
+          (n) => !n.isAuto && !String(n.id).startsWith('gnews-')
+        );
+        ReciclaDB.data.news = [...fetched, ...manualNews];
+        ReciclaDB.data.meta = ReciclaDB.data.meta || {};
+        ReciclaDB.data.meta.lastNewsSync = new Date().toISOString();
+        await ReciclaDB.save();
+        this.renderAll();
+        const withImg = fetched.filter((n) => !!n.imageUrl).length;
+        this.showToast(`📰 ${fetched.length} notícias atualizadas (${withImg} com foto)!`);
       } else {
         this.showToast('⚠️ Não foi possível atualizar as notícias agora.');
       }
-    } catch (e) {
-      this.showToast('⚠️ Inicie o servidor Node.js (INICIAR_APP.bat) para buscar notícias.');
     } finally {
       if (btn) {
         btn.disabled = false;
