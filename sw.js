@@ -2,7 +2,7 @@
  * ReciclaBelém - Service Worker para Modo Offline (PWA + Mapa em Cache)
  */
 
-const CACHE_NAME = 'recicla-belem-offline-v2';
+const CACHE_NAME = 'recicla-belem-offline-v3';
 const APP_SHELL = [
   './',
   './index.html',
@@ -33,8 +33,8 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
 
-  // Tiles do mapa (CARTO / OpenStreetMap): tenta Cache primeiro se já baixado, senão Rede e salva em cache
-  if (req.url.includes('basemaps.cartocdn.com') || req.url.includes('tile.openstreetmap.')) {
+  // Tiles do mapa (OpenStreetMap.de / ArcGIS): tenta Cache primeiro se já baixado, senão Rede e salva em cache
+  if (req.url.includes('tile.openstreetmap.') || req.url.includes('server.arcgisonline.com')) {
     event.respondWith(
       caches.open(CACHE_NAME).then(async (cache) => {
         const cached = await cache.match(req);
