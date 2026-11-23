@@ -2,7 +2,7 @@
  * ReciclaBelém - Service Worker para Modo Offline (PWA + Mapa em Cache)
  */
 
-const CACHE_NAME = 'recicla-belem-offline-v1';
+const CACHE_NAME = 'recicla-belem-offline-v2';
 const APP_SHELL = [
   './',
   './index.html',
@@ -22,22 +22,26 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+    ).then(() => self.clients.claim())
+  );
 });
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
 
-  // Tiles do OpenStreetMap: tenta Cache primeiro se já baixado, senão Rede e salva em cache
-  if (req.url.includes('tile.openstreetmap.org')) {
+  // Tiles do mapa (CARTO / OpenStreetMap): tenta Cache primeiro se já baixado, senão Rede e salva em cache
+  if (req.url.includes('basemaps.cartocdn.com') || req.url.includes('tile.openstreetmap.')) {
     event.respondWith(
       caches.open(CACHE_NAME).then(async (cache) => {
         const cached = await cache.match(req);
         if (cached) return cached;
         try {
           const networkRes = await fetch(req);
-          if (networkRes && networkRes.ok) {
+          if (networkRes && networkRes.ok && (networkRes.headers.get('content-type') || '').startsWith('image/')) {
             cache.put(req, networkRes.clone());
           }
           return networkRes;

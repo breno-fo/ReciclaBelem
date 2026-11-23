@@ -342,11 +342,22 @@ const App = {
 
     L.control.zoom({ position: 'topright' }).addTo(this.map);
 
-    // Tiles oficiais do OpenStreetMap (100% gratuitos, sem API key)
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors',
-      maxZoom: 19
+    // Tiles CARTO Voyager baseados em OpenStreetMap (100% gratuitos, sem API key e sem bloqueio 403 em localhost/file://)
+    const primaryTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+      subdomains: 'abcd',
+      maxZoom: 20
     }).addTo(this.map);
+
+    let fallbackApplied = false;
+    primaryTiles.on('tileerror', () => {
+      if (fallbackApplied) return;
+      fallbackApplied = true;
+      L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 18
+      }).addTo(this.map);
+    });
 
     this.markersLayer = L.layerGroup().addTo(this.map);
 
@@ -503,7 +514,7 @@ const App = {
       const t = this.lonLatToTile(center.lng, center.lat, z);
       for (let dx = -1; dx <= 1; dx++) {
         for (let dy = -1; dy <= 1; dy++) {
-          urls.push(`https://tile.openstreetmap.org/${z}/${t.x + dx}/${t.y + dy}.png`);
+          urls.push(`https://a.basemaps.cartocdn.com/rastertiles/voyager/${z}/${t.x + dx}/${t.y + dy}.png`);
         }
       }
     });
@@ -512,7 +523,7 @@ const App = {
     const total = urls.length;
     let cache = null;
     try {
-      cache = await caches.open('recicla-belem-offline-v1');
+      cache = await caches.open('recicla-belem-offline-v2');
     } catch (e) {}
 
     for (const url of urls) {
