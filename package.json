@@ -1,0 +1,21 @@
+{
+  "name": "recicla-belem",
+  "version": "1.0.0",
+  "description": "Aplicativo Mobile-First (PWA / Android) de Mapa de Ecopontos, Guia de Reciclagem e Dashboard Administrativo para Belém-PA.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "reciclagem",
+    "belem",
+    "ecopontos",
+    "mapa",
+    "sustentabilidade",
+    "android",
+    "pwa"
+  ],
+  "author": "Projeto ReciclaBelém",
+  "license": "MIT"
+}

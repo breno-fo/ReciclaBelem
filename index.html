@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#064e3b" />
+  <title>ReciclaBelém — Mapa de Ecopontos, Guia & Dashboard</title>
+
+  <!-- Manifesto PWA para instalação no Android -->
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- Tipografia Moderna: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Leaflet Maps CSS (Mapa Interativo Open-Source + Integração Google Maps Navigation) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+
+  <!-- Estilos do Design System Verde Clean -->
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- Barra Superior de Simulação (Visível apenas no PC para alternar Visão Usuário, Admin ou Lado a Lado) -->
+  <header class="preview-toolbar" id="preview-toolbar">
+    <div class="toolbar-brand">
+      <span>🌱 ReciclaBelém • Apresentação & Teste</span>
+      <span class="toolbar-badge" id="db-sync-indicator">Banco Local Ativo</span>
+    </div>
+    <div class="toolbar-actions">
+      <div class="toolbar-segmented" role="group" aria-label="Modo de Visualização">
+        <button class="toolbar-btn active" id="btn-role-user" onclick="App.setAppRoleMode('user')">
+          📱 Somente Usuário
+        </button>
+        <button class="toolbar-btn" id="btn-role-admin" onclick="App.setAppRoleMode('admin')">
+          ⚙️ Somente Admin
+        </button>
+        <button class="toolbar-btn" id="btn-role-split" onclick="App.setAppRoleMode('split')">
+          📱⚙️ Lado a Lado
+        </button>
+      </div>
+      <button class="toolbar-btn" id="btn-mode-full" onclick="App.toggleFullscreen()">
+        🖥️ Tela Cheia
+      </button>
+      <button class="toolbar-btn" onclick="App.openLocationModal()">
+        📍 Testar GPS
+      </button>
+    </div>
+  </header>
+
+  <!-- Modo Lado a Lado (Usuário Final à esquerda + Operador/Admin à direita) -->
+  <section class="split-stage" id="split-stage" aria-label="Visualização Lado a Lado">
+    <div class="split-column">
+      <div class="split-label user-label">📱 Visão do Usuário Final (App do Cidadão)</div>
+      <iframe id="iframe-user" class="split-iframe" title="App Usuário Final"></iframe>
+    </div>
+    <div class="split-column">
+      <div class="split-label admin-label">⚙️ Visão do Operador (Modo Admin + Dashboard)</div>
+      <iframe id="iframe-admin" class="split-iframe" title="App Operador Admin"></iframe>
+    </div>
+  </section>
+
+  <main class="app-stage" id="single-app-stage">
+    <div class="phone-frame">
+
+      <!-- Barra de Status Simulada do Android com Câmera Frontal, 5G Oscilante e Bateria (1h) -->
+      <div class="android-statusbar">
+        <span id="statusbar-clock">16:25</span>
+
+        <!-- Câmera Frontal (Punch-Hole) -->
+        <div class="phone-camera" title="Câmera Frontal">
+          <div class="phone-camera-lens"></div>
+        </div>
+
+        <div class="status-icons">
+          <span class="net-status" id="statusbar-network" title="Conexão de Dados Móveis">
+            <span class="signal-bars" id="signal-bars">
+              <i class="bar b1 active"></i>
+              <i class="bar b2 active"></i>
+              <i class="bar b3 active"></i>
+              <i class="bar b4 active"></i>
+            </span>
+            <span id="network-label">5G</span>
+          </span>
+          <span class="status-dot">•</span>
+          <span>GPS</span>
+          <span class="status-dot">•</span>
+          <span class="battery-status" id="statusbar-battery" title="Bateria descarrega em 1h (duplo clique para recarregar 100%)" ondblclick="App.resetBattery()">
+            <span id="statusbar-battery-text">100%</span>
+            <span class="battery-icon">
+              <span class="battery-fill" id="battery-fill" style="width:100%;"></span>
+            </span>
+          </span>
+        </div>
+      </div>
+
+      <!-- ==============================================================
+           TELA INICIAL DO CELULAR ANDROID (LAUNCHER)
+           ============================================================== -->
+      <div class="android-launcher active" id="android-launcher">
+        <div class="launcher-top-widget">
+          <div class="launcher-clock" id="launcher-clock">17:58</div>
+          <div class="launcher-date-weather" id="launcher-date-weather">Seg, 23 de Nov • 🌤️ 29°C Belém</div>
+        </div>
+
+        <div class="launcher-google-bar" onclick="App.showToast('📱 Tela inicial simulada — toque em ReciclaBelém para abrir!')">
+          <span class="g-logo">G</span>
+          <span class="g-placeholder">Pesquisar no Google ou dizer "Ok Google"</span>
+          <span>🎙️</span>
+        </div>
+
+        <div class="launcher-apps-grid">
+          <button type="button" class="launcher-app" onclick="App.openSimulatedApp('Google Maps')">
+            <span class="app-icon-box" style="background:linear-gradient(135deg,#34a853,#4285f4);">🗺️</span>
+            <span class="app-icon-label">Maps</span>
+          </button>
+          <button type="button" class="launcher-app" onclick="App.openSimulatedApp('WhatsApp')">
+            <span class="app-icon-box" style="background:linear-gradient(135deg,#25d366,#128c7e);">💬</span>
+            <span class="app-icon-label">WhatsApp</span>
+          </button>
+          <button type="button" class="launcher-app" onclick="App.openSimulatedApp('Instagram')">
+            <span class="app-icon-box" style="background:linear-gradient(135deg,#f58529,#dd2a7b,#8134af);">📸</span>
+            <span class="app-icon-label">Instagram</span>
+          </button>
+          <button type="button" class="launcher-app" onclick="App.openSimulatedApp('YouTube')">
+            <span class="app-icon-box" style="background:linear-gradient(135deg,#ff0000,#cc0000);">▶️</span>
+            <span class="app-icon-label">YouTube</span>
+          </button>
+
+          <button type="button" class="launcher-app" onclick="App.openSimulatedApp('Play Store')">
+            <span class="app-icon-box" style="background:linear-gradient(135deg,#00c6ff,#0072ff);">🛍️</span>
+            <span class="app-icon-label">Play Store</span>
+          </button>
+          <button type="button" class="launcher-app" onclick="App.openSimulatedApp('Câmera')">
+            <span class="app-icon-box" style="background:linear-gradient(135deg,#334155,#0f172a);">📷</span>
+            <span class="app-icon-label">Câmera</span>
+          </button>
+          <button type="button" class="launcher-app" onclick="App.openSimulatedApp('Galeria')">
+            <span class="app-icon-box" style="background:linear-gradient(135deg,#f97316,#ec4899);">🖼️</span>
+            <span class="app-icon-label">Galeria</span>
+          </button>
+          <button type="button" class="launcher-app is-recicla" onclick="App.launchReciclaBelem()">
+            <span class="app-icon-box recicla-app-icon">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 19H4.815a1.83 1.83 0 0 1-1.57-.881 1.785 1.785 0 0 1-.004-1.784L7.196 9.5"/>
+                <path d="M11 19h8.203a1.83 1.83 0 0 0 1.556-.89 1.784 1.784 0 0 0 0-1.775l-1.226-2.12"/>
+                <path d="m14 16-3 3 3 3"/>
+                <path d="M8.293 13.596 7.196 9.5 3.1 10.598"/>
+                <path d="m9.344 5.811 1.093-1.892A1.83 1.83 0 0 1 11.985 3a1.784 1.784 0 0 1 1.546.888l3.943 6.843"/>
+                <path d="m13.378 9.633 4.096 1.098 1.097-4.096"/>
+              </svg>
+            </span>
+            <span class="app-icon-label">ReciclaBelém</span>
+          </button>
+
+          <button type="button" class="launcher-app" onclick="App.openSimulatedApp('Google Drive')">
+            <span class="app-icon-box" style="background:linear-gradient(135deg,#0f9d58,#4285f4,#f4b400);">▲</span>
+            <span class="app-icon-label">Drive</span>
+          </button>
+          <button type="button" class="launcher-app" onclick="App.openSimulatedApp('Spotify')">
+            <span class="app-icon-box" style="background:linear-gradient(135deg,#1db954,#15803d);">🎵</span>
+            <span class="app-icon-label">Spotify</span>
+          </button>
+          <button type="button" class="launcher-app" onclick="App.openSimulatedApp('Relógio')">
+            <span class="app-icon-box" style="background:linear-gradient(135deg,#4f46e5,#312e81);">⏰</span>
+            <span class="app-icon-label">Relógio</span>
+          </button>
+          <button type="button" class="launcher-app" onclick="App.openSimulatedApp('Configurações')">
+            <span class="app-icon-box" style="background:linear-gradient(135deg,#64748b,#334155);">⚙️</span>
+            <span class="app-icon-label">Config.</span>
+          </button>
+        </div>
+
+        <div class="launcher-dock">
+          <button type="button" class="launcher-app" onclick="App.openSimulatedApp('Telefone')">
+            <span class="app-icon-box" style="background:linear-gradient(135deg,#22c55e,#15803d);">📞</span>
+          </button>
+          <button type="button" class="launcher-app" onclick="App.openSimulatedApp('Mensagens')">
+            <span class="app-icon-box" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8);">✉️</span>
+          </button>
+          <button type="button" class="launcher-app is-recicla" onclick="App.launchReciclaBelem()">
+            <span class="app-icon-box recicla-app-icon">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 19H4.815a1.83 1.83 0 0 1-1.57-.881 1.785 1.785 0 0 1-.004-1.784L7.196 9.5"/>
+                <path d="M11 19h8.203a1.83 1.83 0 0 0 1.556-.89 1.784 1.784 0 0 0 0-1.775l-1.226-2.12"/>
+                <path d="m14 16-3 3 3 3"/>
+                <path d="M8.293 13.596 7.196 9.5 3.1 10.598"/>
+                <path d="m9.344 5.811 1.093-1.892A1.83 1.83 0 0 1 11.985 3a1.784 1.784 0 0 1 1.546.888l3.943 6.843"/>
+                <path d="m13.378 9.633 4.096 1.098 1.097-4.096"/>
+              </svg>
+            </span>
+          </button>
+          <button type="button" class="launcher-app" onclick="App.openSimulatedApp('Chrome')">
+            <span class="app-icon-box" style="background:linear-gradient(135deg,#ea4335,#fbbc05,#34a853);">🌐</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Splash Screen de Abertura do App Android -->
+      <div class="app-splash-screen" id="app-splash-screen">
+        <div class="splash-logo-box">
+          <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 19H4.815a1.83 1.83 0 0 1-1.57-.881 1.785 1.785 0 0 1-.004-1.784L7.196 9.5"/>
+            <path d="M11 19h8.203a1.83 1.83 0 0 0 1.556-.89 1.784 1.784 0 0 0 0-1.775l-1.226-2.12"/>
+            <path d="m14 16-3 3 3 3"/>
+            <path d="M8.293 13.596 7.196 9.5 3.1 10.598"/>
+            <path d="m9.344 5.811 1.093-1.892A1.83 1.83 0 0 1 11.985 3a1.784 1.784 0 0 1 1.546.888l3.943 6.843"/>
+            <path d="m13.378 9.633 4.096 1.098 1.097-4.096"/>
+          </svg>
+        </div>
+        <h2>ReciclaBelém</h2>
+        <p>Carregando pontos de coleta...</p>
+      </div>
+
+      <!-- Cabeçalho Principal do App -->
+      <header class="app-header">
+        <div class="header-top">
+          <div class="brand-group">
+            <div class="brand-logo" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 19H4.815a1.83 1.83 0 0 1-1.57-.881 1.785 1.785 0 0 1-.004-1.784L7.196 9.5"/>
+                <path d="M11 19h8.203a1.83 1.83 0 0 0 1.556-.89 1.784 1.784 0 0 0 0-1.775l-1.226-2.12"/>
+                <path d="m14 16-3 3 3 3"/>
+                <path d="M8.293 13.596 7.196 9.5 3.1 10.598"/>
+                <path d="m9.344 5.811 1.093-1.892A1.83 1.83 0 0 1 11.985 3a1.784 1.784 0 0 1 1.546.888l3.943 6.843"/>
+                <path d="m13.378 9.633 4.096 1.098 1.097-4.096"/>
+              </svg>
+            </div>
+            <div class="brand-titles">
+              <h1>ReciclaBelém<span class="admin-title-tag"> (Admin)</span></h1>
+              <p>Mapa de Coleta Seletiva & Educação</p>
+            </div>
+          </div>
+
+          <button class="loc-pill" id="header-loc-btn" onclick="App.openLocationModal()" title="Configurar localização">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4">
+              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+            <span id="header-loc-text">Ativar GPS</span>
+          </button>
+        </div>
+
+        <!-- Barra de Busca de Pontos e Lugares -->
+        <div class="search-bar-wrap" id="header-search-wrap">
+          <svg class="search-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+          </svg>
+          <input
+            type="text"
+            id="search-input"
+            class="search-input"
+            placeholder="Buscar ponto, praça, bairro ou endereço..."
+            autocomplete="off"
+          />
+          <button class="search-clear" id="search-clear-btn" onclick="App.clearSearch()" title="Limpar busca">✕</button>
+          <div class="search-suggestions" id="search-suggestions" role="listbox" aria-label="Sugestões de busca"></div>
+        </div>
+      </header>
+
+      <!-- Conteúdo Dinâmico por Abas -->
+      <div class="app-content">
+
+        <!-- ==============================================================
+             ABA 1: MAPA E PONTOS DE RECICLAGEM
+             ============================================================== -->
+        <section class="tab-view active" id="tab-mapa">
+          <!-- Filtros Rápidos por Material -->
+          <div class="filter-strip" id="material-filters"></div>
+
+          <!-- Mapa Interativo -->
+          <div class="map-wrapper" id="map-wrapper">
+            <div id="map"></div>
+
+            <!-- Pin Central Fixo para Selecionar Localização Arrastando o Mapa -->
+            <div class="map-center-picker" id="map-center-picker" aria-hidden="true">
+              <div class="center-pin-head">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4">
+                  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                  <circle cx="12" cy="10" r="3"/>
+                </svg>
+              </div>
+              <div class="center-pin-tail"></div>
+              <div class="center-pin-shadow"></div>
+            </div>
+
+            <!-- Painel Flutuante de Prévia do Endereço + Confirmar Localização -->
+            <div class="map-picker-sheet" id="map-picker-sheet">
+              <div class="picker-preview-row">
+                <span class="picker-preview-badge">📍 Arraste o mapa para posicionar o pin</span>
+                <div class="picker-preview-address" id="picker-preview-address">Buscando endereço...</div>
+              </div>
+              <div class="picker-actions-row">
+                <button type="button" class="btn btn-secondary" onclick="App.cancelMapPicker()" style="padding:10px 14px;">
+                  Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" onclick="App.confirmMapPickerLocation()" style="padding:10px 14px;">
+                  ✅ Confirmar Localização
+                </button>
+              </div>
+            </div>
+
+            <!-- Banner de Pré-visualização de Rota -->
+            <div class="route-overlay-banner" id="route-banner">
+              <span id="route-banner-text">Rota traçada</span>
+              <button class="route-close-btn" onclick="App.clearRoute()">Limpar</button>
+            </div>
+
+            <!-- Botões Flutuantes do Mapa -->
+            <div class="map-floating-controls">
+              <button class="map-fab" id="btn-offline-map" onclick="App.openOfflineMapModal()" title="Baixar mapa de Belém para usar offline">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                <span class="offline-done-dot" id="offline-done-dot" title="Mapa offline salvo">✓</span>
+              </button>
+              <button class="map-fab" onclick="App.centerOnUserOrPrompt()" title="Ir para minha localização">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/>
+                </svg>
+              </button>
+              <button class="map-fab" onclick="App.resetMapView()" title="Ver todos os pontos de Belém">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Gaveta Retrátil de Pontos (Bottom Sheet) -->
+          <div class="points-drawer" id="points-drawer">
+            <div class="drawer-handle-bar" id="drawer-handle-bar" onclick="App.togglePointsDrawer()" title="Puxe ou clique para ver a lista de pontos">
+              <div class="drawer-pill-row">
+                <span class="drawer-chevron" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m18 15-6-6-6 6"/>
+                  </svg>
+                </span>
+              </div>
+              <div class="section-header-row" onclick="event.stopPropagation();">
+                <span class="section-count" id="points-count-label" onclick="App.togglePointsDrawer()" style="cursor:pointer;">Carregando pontos...</span>
+                <select class="sort-select" id="sort-select" onchange="App.renderPointsList()">
+                  <option value="distance">Ordenar: Mais próximos</option>
+                  <option value="alpha">Ordenar: Nome (A-Z)</option>
+                </select>
+              </div>
+            </div>
+            <div class="drawer-list-scroll" id="points-list-container"></div>
+          </div>
+        </section>
+
+        <!-- ==============================================================
+             ABA 2: GUIA DE RECICLAGEM (ONDE JOGAR & INCENTIVOS)
+             ============================================================== -->
+        <section class="tab-view" id="tab-guia">
+          <div class="page-container">
+            <div class="hero-incentive-card">
+              <h2>Por que reciclar em Belém? 🌿</h2>
+              <p>Separar seus resíduos secos e orgânicos protege nossos rios e canais, reduz alagamentos e gera renda digna para centenas de famílias de catadores na Amazônia.</p>
+            </div>
+
+            <div>
+              <h3 style="font-size:0.92rem;font-weight:800;margin-bottom:10px;color:var(--emerald-900);">
+                💚 Incentivo & Impacto Positivo
+              </h3>
+              <div class="incentives-grid" id="incentives-container"></div>
+            </div>
+
+            <div>
+              <h3 style="font-size:0.92rem;font-weight:800;margin-bottom:10px;color:var(--emerald-900);">
+                🗑️ Onde Jogar Cada Material (Cores & Preparo)
+              </h3>
+              <div style="display:flex;flex-direction:column;gap:12px;" id="materials-guide-container"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==============================================================
+             ABA 3: NOTÍCIAS, CAMPANHAS E AVISOS
+             ============================================================== -->
+        <section class="tab-view" id="tab-noticias">
+          <div class="page-container">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div>
+                <h2 style="font-size:1.05rem;font-weight:800;color:var(--emerald-900);">Notícias & Mutirões</h2>
+                <p style="font-size:0.77rem;color:var(--text-secondary);">Fique por dentro das ações ambientais e novidades da coleta seletiva</p>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px;" id="news-list-container"></div>
+          </div>
+        </section>
+
+        <!-- ==============================================================
+             ABA 4: DASHBOARD DO OPERADOR (ADMIN)
+             ============================================================== -->
+        <section class="tab-view" id="tab-admin">
+          <div class="page-container">
+            <div style="background:#fff;border:1px solid var(--border-subtle);border-radius:16px;padding:14px;display:flex;align-items:center;justify-content:space-between;">
+              <div>
+                <h2 style="font-size:1rem;font-weight:800;color:var(--emerald-900);">Painel do Operador</h2>
+                <p style="font-size:0.75rem;color:var(--text-secondary);">Gerencie ecopontos, notícias e guia de reciclagem em tempo real</p>
+              </div>
+              <span class="distance-badge" id="admin-stats-badge">8 pontos</span>
+            </div>
+
+            <!-- Sub-abas do Dashboard -->
+            <div class="admin-subtabs">
+              <button class="admin-subtab active" data-subtab="pontos" onclick="App.switchAdminSubtab('pontos')">📍 Pontos</button>
+              <button class="admin-subtab" data-subtab="noticias" onclick="App.switchAdminSubtab('noticias')">📰 Notícias</button>
+              <button class="admin-subtab" data-subtab="guia" onclick="App.switchAdminSubtab('guia')">♻️ Guia & Incentivo</button>
+              <button class="admin-subtab" data-subtab="banco" onclick="App.switchAdminSubtab('banco')">💾 Banco JSON</button>
+            </div>
+
+            <!-- SUB-PAINEL 1: GERENCIAR PONTOS DE RECICLAGEM -->
+            <div class="admin-panel active" id="admin-panel-pontos">
+              <div class="form-card">
+                <h3>
+                  <span id="point-form-title">➕ Cadastrar Novo Ponto de Reciclagem</span>
+                  <button class="icon-btn" id="point-form-cancel" style="display:none;" onclick="App.resetPointForm()">Cancelar Edição</button>
+                </h3>
+                <form id="form-point" onsubmit="App.savePoint(event)">
+                  <input type="hidden" id="pt-id" />
+                  <div class="form-group">
+                    <label class="form-label">Nome do Ponto / Ecoponto *</label>
+                    <input type="text" id="pt-name" class="form-input" placeholder="Ex: Ecoponto Praça da República" required />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Horário de Funcionamento *</label>
+                    <div class="schedule-trigger-wrap" onclick="App.toggleSchedulePicker()">
+                      <input type="text" id="pt-hours" class="form-input schedule-input-display" placeholder="Clique para escolher dias e horário" value="Seg a Sáb • 08h às 18h" readonly required />
+                      <span class="schedule-trigger-icon" title="Abrir calendário semanal">📅</span>
+                    </div>
+                  </div>
+
+                  <!-- Calendário Semanal & Seletor de Horário -->
+                  <div class="schedule-picker" id="schedule-picker">
+                    <div class="schedule-picker-header">
+                      <span>📅 Selecione os Dias da Semana e Horário</span>
+                      <button type="button" class="icon-btn" style="padding:3px 8px;font-size:0.7rem;" onclick="App.toggleSchedulePicker(false)">Concluir ✓</button>
+                    </div>
+                    <div class="schedule-presets">
+                      <button type="button" class="preset-btn" onclick="App.applySchedulePreset('seg-sex')">Seg a Sex</button>
+                      <button type="button" class="preset-btn" onclick="App.applySchedulePreset('seg-sab')">Seg a Sáb</button>
+                      <button type="button" class="preset-btn" onclick="App.applySchedulePreset('todos')">Todos os dias</button>
+                    </div>
+                    <div class="weekday-grid" id="weekday-grid">
+                      <button type="button" class="weekday-btn" data-day="Dom" onclick="App.toggleWeekday('Dom')">Dom</button>
+                      <button type="button" class="weekday-btn active" data-day="Seg" onclick="App.toggleWeekday('Seg')">Seg</button>
+                      <button type="button" class="weekday-btn active" data-day="Ter" onclick="App.toggleWeekday('Ter')">Ter</button>
+                      <button type="button" class="weekday-btn active" data-day="Qua" onclick="App.toggleWeekday('Qua')">Qua</button>
+                      <button type="button" class="weekday-btn active" data-day="Qui" onclick="App.toggleWeekday('Qui')">Qui</button>
+                      <button type="button" class="weekday-btn active" data-day="Sex" onclick="App.toggleWeekday('Sex')">Sex</button>
+                      <button type="button" class="weekday-btn active" data-day="Sáb" onclick="App.toggleWeekday('Sáb')">Sáb</button>
+                    </div>
+                    <div class="schedule-time-row">
+                      <div class="time-field">
+                        <label class="form-label" style="margin-bottom:2px;">Abre às</label>
+                        <input type="time" id="sched-open" class="form-input" value="08:00" onchange="App.syncScheduleToInput()" />
+                      </div>
+                      <div class="time-field">
+                        <label class="form-label" style="margin-bottom:2px;">Fecha às</label>
+                        <input type="time" id="sched-close" class="form-input" value="18:00" onchange="App.syncScheduleToInput()" />
+                      </div>
+                      <label class="checkbox-item" style="align-self:flex-end;height:38px;">
+                        <input type="checkbox" id="sched-24h" onchange="App.syncScheduleToInput()" />
+                        <span>24h</span>
+                      </label>
+                    </div>
+                  </div>
+                  <input type="hidden" id="pt-lat" />
+                  <input type="hidden" id="pt-lng" />
+
+                  <div class="form-group">
+                    <label class="form-label">Localização e Endereço no Mapa *</label>
+                    <button type="button" id="btn-pick-map" class="btn btn-secondary" style="width:100%;padding:10px 12px;font-size:0.82rem;" onclick="App.pickCoordinatesOnMap()">
+                      🗺️ Selecionar no mapa
+                    </button>
+                  </div>
+
+                  <div id="pt-location-fields" style="display:none;">
+                    <div class="form-row" style="grid-template-columns: 2fr 1fr;">
+                      <div class="form-group">
+                        <label class="form-label">Endereço *</label>
+                        <input type="text" id="pt-address" class="form-input" placeholder="Ex: Av. Presidente Vargas" />
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">Número</label>
+                        <input type="text" id="pt-number" class="form-input" placeholder="Ex: 120 ou s/n" />
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Bairro *</label>
+                      <input type="text" id="pt-neighborhood" class="form-input" placeholder="Preenchido automaticamente (edite se necessário)" />
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Telefone / Contato (Opcional)</label>
+                    <input type="text" id="pt-phone" class="form-input" placeholder="(91) 3200-0000" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Materiais Aceitos neste Ponto *</label>
+                    <div class="checkbox-grid" id="pt-materials-checkboxes"></div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Observações / Instruções do Ponto</label>
+                    <textarea id="pt-desc" class="form-textarea" placeholder="Ex: Recebe materiais recicláveis limpos e óleo em garrafa PET."></textarea>
+                  </div>
+                  <button type="submit" class="btn btn-primary" style="width:100%;">
+                    💾 Salvar Ponto no Banco de Dados
+                  </button>
+                </form>
+              </div>
+
+              <div class="form-card">
+                <h3><span>📋 Pontos Cadastrados (<span id="admin-points-total">0</span>)</span></h3>
+                <div style="display:flex;flex-direction:column;gap:8px;" id="admin-points-list"></div>
+              </div>
+            </div>
+
+            <!-- SUB-PAINEL 2: GERENCIAR NOTÍCIAS E INFORMAÇÕES -->
+            <div class="admin-panel" id="admin-panel-noticias">
+              <div class="form-card" style="background:linear-gradient(135deg,#f0fdf4,#ffffff);border-color:var(--emerald-200);">
+                <h3><span>🤖 Coletor Automático (Belém, Ananindeua & Outeiro)</span></h3>
+                <p style="font-size:0.78rem;color:var(--text-secondary);line-height:1.45;margin-bottom:10px;">
+                  O servidor busca automaticamente <strong>todos os dias (08h e 20h)</strong> notícias sobre ecologia e reciclagem da região metropolitana com foto e texto dos portais originais.
+                </p>
+                <button type="button" class="btn btn-secondary" id="btn-refresh-news" style="width:100%;" onclick="App.refreshNewsFromServer()">
+                  🔄 Buscar Notícias Agora (Atualização Imediata)
+                </button>
+              </div>
+
+              <div class="form-card">
+                <h3>
+                  <span id="news-form-title">➕ Publicar Nova Notícia ou Aviso</span>
+                  <button class="icon-btn" id="news-form-cancel" style="display:none;" onclick="App.resetNewsForm()">Cancelar</button>
+                </h3>
+                <form id="form-news" onsubmit="App.saveNews(event)">
+                  <input type="hidden" id="news-id" />
+                  <div class="form-group">
+                    <label class="form-label">Título da Notícia / Campanha *</label>
+                    <input type="text" id="news-title" class="form-input" placeholder="Ex: Nova campanha de coleta de vidro em Belém" required />
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label">Categoria / Tag *</label>
+                      <input type="text" id="news-category" class="form-input" placeholder="Ex: Mutirão, Aviso, Dica" required />
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Autor / Fonte *</label>
+                      <input type="text" id="news-author" class="form-input" placeholder="Equipe ReciclaBelém" required />
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">URL da Foto de Capa (Opcional)</label>
+                    <input type="url" id="news-image" class="form-input" placeholder="https://..." />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Conteúdo / Resumo *</label>
+                    <textarea id="news-summary" class="form-textarea" placeholder="Escreva os detalhes da notícia ou informação..." required></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label class="checkbox-item" style="display:inline-flex;">
+                      <input type="checkbox" id="news-featured" /> Destacar notícia no topo
+                    </label>
+                  </div>
+                  <button type="submit" class="btn btn-primary" style="width:100%;">
+                    📰 Publicar Notícia
+                  </button>
+                </form>
+              </div>
+
+              <div class="form-card">
+                <h3>📋 Notícias Publicadas</h3>
+                <div style="display:flex;flex-direction:column;gap:8px;" id="admin-news-list"></div>
+              </div>
+            </div>
+
+            <!-- SUB-PAINEL 3: GERENCIAR GUIA (ONDE JOGAR) & INCENTIVOS -->
+            <div class="admin-panel" id="admin-panel-guia">
+              <!-- Formulário de Instrução de Material -->
+              <div class="form-card">
+                <h3>
+                  <span id="guide-form-title">➕ Adicionar/Editar Regra: Onde Jogar Material</span>
+                  <button class="icon-btn" id="guide-form-cancel" style="display:none;" onclick="App.resetGuideForm()">Cancelar</button>
+                </h3>
+                <form id="form-guide" onsubmit="App.saveGuideItem(event)">
+                  <input type="hidden" id="guide-id" />
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label">Nome do Material *</label>
+                      <input type="text" id="guide-name" class="form-input" placeholder="Ex: Isopor (EPS)" required />
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Cor do Coletor / Lixeira *</label>
+                      <input type="text" id="guide-bin" class="form-input" placeholder="Ex: Lixeira Vermelha (Plástico)" required />
+                    </div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label">Onde Jogar / Entregar *</label>
+                      <input type="text" id="guide-where" class="form-input" placeholder="Ex: Coletor Vermelho ou Cooperativas" required />
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Cor de Destaque</label>
+                      <input type="color" id="guide-color" class="form-input" value="#10B981" style="height:38px;padding:4px;" />
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">✅ O que PODE reciclar *</label>
+                    <input type="text" id="guide-can" class="form-input" placeholder="Ex: Bandejas limpas, protetores de eletrodomésticos..." required />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">❌ O que NÃO pode reciclar *</label>
+                    <input type="text" id="guide-cannot" class="form-input" placeholder="Ex: Marmitas de isopor engorduradas..." required />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">💡 Dica de Preparo e Incentivo *</label>
+                    <textarea id="guide-tip" class="form-textarea" placeholder="Como limpar ou preparar o material antes de descartar..." required></textarea>
+                  </div>
+                  <button type="submit" class="btn btn-primary" style="width:100%;">
+                    ♻️ Salvar Instrução de Material
+                  </button>
+                </form>
+              </div>
+
+              <div class="form-card">
+                <h3>📋 Materiais no Guia</h3>
+                <div style="display:flex;flex-direction:column;gap:8px;" id="admin-guide-list"></div>
+              </div>
+
+              <!-- Formulário de Incentivo -->
+              <div class="form-card">
+                <h3>➕ Adicionar Card de Incentivo à Reciclagem</h3>
+                <form id="form-incentive" onsubmit="App.saveIncentive(event)">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label">Título Motivacional *</label>
+                      <input type="text" id="inc-title" class="form-input" placeholder="Ex: Menos Plástico na Baía do Guajará" required />
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Dado de Impacto / Meta *</label>
+                      <input type="text" id="inc-metric" class="form-input" placeholder="Ex: 1 tonelada = 15 árvores salvas" required />
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Tag / Categoria *</label>
+                    <input type="text" id="inc-tag" class="form-input" placeholder="Ex: Amazônia Viva" required />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Explicação / Incentivo *</label>
+                    <textarea id="inc-desc" class="form-textarea" placeholder="Explique como essa prática ajuda a cidade e o meio ambiente..." required></textarea>
+                  </div>
+                  <button type="submit" class="btn btn-primary" style="width:100%;">
+                    💚 Adicionar Card de Incentivo
+                  </button>
+                </form>
+                <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px;" id="admin-incentives-list"></div>
+              </div>
+            </div>
+
+            <!-- SUB-PAINEL 4: BANCO DE DADOS E EXPORTAÇÃO -->
+            <div class="admin-panel" id="admin-panel-banco">
+              <div class="form-card">
+                <h3>💾 Persistência & Portabilidade (Google Drive)</h3>
+                <p style="font-size:0.8rem;color:var(--text-secondary);line-height:1.45;margin-bottom:14px;">
+                  Todas as alterações feitas neste Dashboard são salvas automaticamente no arquivo <code>data/database.json</code> (quando o servidor Node está ativo) e no <code>localStorage</code> do navegador. Você também pode baixar o arquivo JSON para levar no Google Drive.
+                </p>
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                  <button class="btn btn-primary" onclick="ReciclaDB.exportJSON()">
+                    ⬇️ Baixar Banco de Dados Atualizado (.json)
+                  </button>
+                  <label class="btn btn-secondary" style="cursor:pointer;">
+                    ⬆️ Importar Arquivo de Banco (.json)
+                    <input type="file" accept=".json" style="display:none;" onchange="App.handleImportJSON(event)" />
+                  </label>
+                  <button class="btn btn-danger" onclick="App.handleResetDB()">
+                    🔄 Restaurar Dados Originais de Demonstração
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+      </div>
+
+      <!-- Barra de Navegação Inferior (Android Bottom Navigation) -->
+      <nav class="bottom-nav" aria-label="Navegação Principal">
+        <button class="nav-item active" data-tab="mapa" onclick="App.switchTab('mapa')">
+          <span class="nav-icon-pill">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2">
+              <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/>
+              <line x1="9" x2="9" y1="3" y2="18"/>
+              <line x1="15" x2="15" y1="6" y2="21"/>
+            </svg>
+          </span>
+          <span>Mapa</span>
+        </button>
+
+        <button class="nav-item" data-tab="guia" onclick="App.switchTab('guia')">
+          <span class="nav-icon-pill">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+            </svg>
+          </span>
+          <span>Onde Jogar</span>
+        </button>
+
+        <button class="nav-item" data-tab="noticias" onclick="App.switchTab('noticias')">
+          <span class="nav-icon-pill">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/>
+              <path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/>
+            </svg>
+          </span>
+          <span>Notícias</span>
+        </button>
+
+        <button class="nav-item" id="nav-item-admin" data-tab="admin" onclick="App.switchTab('admin')">
+          <span class="nav-icon-pill">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2">
+              <rect width="7" height="9" x="3" y="3" rx="1"/>
+              <rect width="7" height="5" x="14" y="3" rx="1"/>
+              <rect width="7" height="9" x="14" y="12" rx="1"/>
+              <rect width="7" height="5" x="3" y="16" rx="1"/>
+            </svg>
+          </span>
+          <span>Dashboard</span>
+        </button>
+      </nav>
+
+      <!-- Barra de Gesto Inferior do Android (Voltar à Tela Inicial) -->
+      <div class="android-gesture-bar" onclick="App.goToPhoneHome()" title="Toque para voltar à Tela Inicial do celular">
+        <span class="gesture-pill"></span>
+      </div>
+
+      <!-- ==============================================================
+           MODAL 1: PERMISSÃO DE COLETA DE LOCALIZAÇÃO (ANDROID GPS)
+           ============================================================== -->
+      <div class="modal-backdrop" id="location-modal">
+        <div class="modal-sheet">
+          <div class="sheet-handle"></div>
+          <div style="text-align:center;margin-bottom:14px;">
+            <div style="width:52px;height:52px;border-radius:16px;background:var(--emerald-100);color:var(--emerald-800);display:inline-flex;align-items:center;justify-content:center;margin-bottom:10px;">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+            </div>
+            <h3 style="font-size:1.05rem;font-weight:800;color:var(--text-main);margin-bottom:6px;">
+              Permitir acesso à sua localização?
+            </h3>
+            <p style="font-size:0.81rem;color:var(--text-secondary);line-height:1.45;">
+              O <strong>ReciclaBelém</strong> usa sua localização apenas para mostrar os ecopontos mais próximos de você e iniciar a rota de navegação no Google Maps.
+            </p>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <button class="btn btn-primary" onclick="App.requestBrowserGeolocation()">
+              📍 Permitir durante o uso do app (GPS Real)
+            </button>
+            <button class="btn btn-secondary" onclick="App.useSimulatedBelemLocation()">
+              🏛️ Simular localização no Centro de Belém (Teste PC)
+            </button>
+            <button class="btn btn-secondary" onclick="App.enableClickToSetUserLocation()">
+              👆 Escolher minha posição clicando no mapa
+            </button>
+            <button class="btn" style="background:transparent;color:var(--text-muted);" onclick="App.closeLocationModal()">
+              Não permitir agora
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==============================================================
+           MODAL 2: DETALHES DO PONTO E NAVEGAÇÃO GOOGLE MAPS
+           ============================================================== -->
+      <div class="modal-backdrop" id="point-detail-modal">
+        <div class="modal-sheet" id="point-detail-content"></div>
+      </div>
+
+      <!-- ==============================================================
+           MODAL 3: BAIXAR MAPA PARA USAR OFFLINE (DETECÇÃO DADOS MÓVEIS)
+           ============================================================== -->
+      <div class="modal-backdrop" id="offline-map-modal">
+        <div class="modal-sheet">
+          <div class="sheet-handle"></div>
+          <div style="text-align:center;margin-bottom:12px;">
+            <div style="width:52px;height:52px;border-radius:16px;background:var(--emerald-100);color:var(--emerald-800);display:inline-flex;align-items:center;justify-content:center;margin-bottom:10px;">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </div>
+            <h3 style="font-size:1.05rem;font-weight:800;color:var(--text-main);margin-bottom:6px;">
+              Baixar mapa de Belém para usar offline?
+            </h3>
+            <p style="font-size:0.81rem;color:var(--text-secondary);line-height:1.45;">
+              Salve o mapa e todos os <strong>29 pontos de reciclagem</strong> no seu aparelho para consultar e buscar ecopontos mesmo sem internet.
+            </p>
+          </div>
+
+          <!-- Tamanho Estimado + Alerta de Dados Móveis -->
+          <div class="offline-info-box">
+            <div class="offline-size-row">
+              <span>📦 Tamanho estimado do pacote:</span>
+              <strong style="color:var(--emerald-800);">~18,4 MB</strong>
+            </div>
+            <div class="offline-network-alert" id="offline-network-alert">
+              <!-- Preenchido dinamicamente pelo JS (Dados Móveis vs Wi-Fi) -->
+            </div>
+          </div>
+
+          <!-- Barra de Progresso do Download -->
+          <div class="offline-progress-wrap" id="offline-progress-wrap" style="display:none;">
+            <div style="display:flex;justify-content:space-between;font-size:0.75rem;font-weight:700;margin-bottom:5px;color:var(--emerald-900);">
+              <span id="offline-progress-label">Baixando mapa de Belém...</span>
+              <span id="offline-progress-pct">0%</span>
+            </div>
+            <div class="offline-progress-track">
+              <div class="offline-progress-bar" id="offline-progress-bar" style="width:0%;"></div>
+            </div>
+          </div>
+
+          <div id="offline-modal-actions" style="display:flex;flex-direction:column;gap:8px;">
+            <button class="btn btn-primary" id="btn-confirm-offline-dl" onclick="App.startOfflineMapDownload()">
+              ⬇️ Baixar Mapa Offline (~18,4 MB)
+            </button>
+            <button class="btn btn-secondary" onclick="App.dismissOfflineModal()">
+              Agora não (Lembrar depois)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Toast de Feedback Rápido -->
+      <div class="toast-notification" id="app-toast">Operação realizada!</div>
+
+    </div>
+  </main>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+  <!-- Scripts do Aplicativo -->
+  <script src="js/db.js"></script>
+  <script src="js/icons.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

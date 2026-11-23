@@ -1,0 +1,11 @@
+{
+  "name": "ReciclaBelém - Ecopontos & Coleta Seletiva",
+  "short_name": "ReciclaBelém",
+  "description": "Encontre pontos de reciclagem em Belém, inicie navegação no Google Maps e aprenda onde descartar cada material.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f3f8f5",
+  "theme_color": "#064e3b",
+  "lang": "pt-BR"
+}
