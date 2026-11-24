@@ -500,6 +500,14 @@ const App = {
     this.hideUtilitySheet('location-modal');
   },
 
+  openPrivacyModal() {
+    this.showUtilitySheet('privacy-modal');
+  },
+
+  closePrivacyModal() {
+    this.hideUtilitySheet('privacy-modal');
+  },
+
   showUtilitySheet(id) {
     const modal = document.getElementById(id);
     if (modal.classList.contains('open')) return;
