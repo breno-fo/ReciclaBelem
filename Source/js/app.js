@@ -1257,45 +1257,36 @@ const App = {
     if (!this.map || !this.markersLayer) return;
     this.markersLayer.clearLayers();
     this.map.closePopup();
-    const groups = [];
-    for (const point of this.getFilteredPoints()) {
-      const lat = Number(point.lat), lng = Number(point.lng);
-      if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-      const latLng = L.latLng(lat, lng);
-      const position = this.map.project(latLng);
-      const selected = point.id === this.selectedPointId;
-      const nearby = !selected && groups.find(group => !group.selected && group.center.distanceTo(position) < 43);
-      if (nearby) {
-        const count = nearby.points.length;
-        nearby.center = nearby.center.multiplyBy(count).add(position).divideBy(count + 1);
-        nearby.points.push(point);
-      } else {
-        groups.push({ center: position, points: [point], selected });
-      }
-    }
 
-    groups.forEach(({ center, points, selected }) => {
-      const group = points.length > 1;
-      const name = group ? points.length + ' ecopontos, ' + (this.map.getZoom() < this.map.getMaxZoom() ? 'ampliar' : 'ver lista')
-        : ReciclaIcons.formatPointName(points[0].name);
+    for (const point of this.getFilteredPoints()) {
+      const lat = Number(point.lat);
+      const lng = Number(point.lng);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+
+      const selected = point.id === this.selectedPointId;
+      const matCount = Array.isArray(point.materials) ? point.materials.length : 0;
+      const name = ReciclaIcons.formatPointName(point.name);
+
       const icon = L.divIcon({
         className: 'ecopoint-marker',
-        html: group ? '<span class="map-cluster">' + points.length + '</span>' : ReciclaIcons.createMapPinHTML(selected),
+        html: ReciclaIcons.createMapPinHTML(selected, matCount),
         iconSize: [48, 44],
-        iconAnchor: [24, group ? 22 : 41]
+        iconAnchor: [24, 41]
       });
-      const marker = L.marker(this.map.unproject(center), {
-        icon, title: name, zIndexOffset: selected ? 300 : 0
+
+      const marker = L.marker([lat, lng], {
+        icon,
+        title: name,
+        zIndexOffset: selected ? 300 : 0
       }).addTo(this.markersLayer);
+
       const element = marker.getElement();
-      element.setAttribute('aria-label', name);
-      if (group) {
-        marker.on('click', () => this.openMapGroup(points, marker));
-      } else {
-        element.dataset.pointId = points[0].id;
-        marker.on('click', () => this.openPointDetails(points[0].id));
+      if (element) {
+        element.setAttribute('aria-label', name);
+        element.dataset.pointId = point.id;
       }
-    });
+      marker.on('click', () => this.openPointDetails(point.id));
+    }
   },
 
   openMapGroup(points, marker) {

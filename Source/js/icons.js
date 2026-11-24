@@ -4,14 +4,14 @@
 
 window.ReciclaIcons = {
   materialMeta: {
-    plastico: { label: 'Plástico', color: '#EF4444', bg: '#FEF2F2', emoji: '🧴' },
-    papel: { label: 'Papel', color: '#2563EB', bg: '#EFF6FF', emoji: '📦' },
-    vidro: { label: 'Vidro', color: '#10B981', bg: '#ECFDF5', emoji: '🍾' },
-    metal: { label: 'Metal', color: '#D97706', bg: '#FFFBEB', emoji: '🥫' },
-    eletronicos: { label: 'Eletrônicos', color: '#7C3AED', bg: '#F5F3FF', emoji: '🔌' },
-    oleo: { label: 'Óleo', color: '#EA580C', bg: '#FFF7ED', emoji: '🫗' },
-    pilhas: { label: 'Pilhas', color: '#C2410C', bg: '#FFEDD5', emoji: '🔋' },
-    organicos: { label: 'Orgânicos', color: '#78350F', bg: '#FEF3C7', emoji: '🌱' }
+    plastico: { label: 'Plástico', color: '#EF4444', bg: '#FEF2F2' },
+    papel: { label: 'Papel', color: '#2563EB', bg: '#EFF6FF' },
+    vidro: { label: 'Vidro', color: '#10B981', bg: '#ECFDF5' },
+    metal: { label: 'Metal', color: '#D97706', bg: '#FFFBEB' },
+    eletronicos: { label: 'Eletrônicos', color: '#7C3AED', bg: '#F5F3FF' },
+    oleo: { label: 'Óleo', color: '#EA580C', bg: '#FFF7ED' },
+    pilhas: { label: 'Pilhas', color: '#C2410C', bg: '#FFEDD5' },
+    organicos: { label: 'Orgânicos', color: '#78350F', bg: '#FEF3C7' }
   },
 
   /**
@@ -71,20 +71,27 @@ window.ReciclaIcons = {
     }
   },
 
+  getMaterialIcon(slug, size = 20) {
+    if (!Object.prototype.hasOwnProperty.call(this.materialMeta, slug)) {
+      return this.getMaterialIconSVG(slug, '#059669', size);
+    }
+    return `<img class="material-pixel-icon" src="./assets/materials/compact/${slug}.webp" width="${size}" height="${size}" alt="" aria-hidden="true" />`;
+  },
+
   getMaterialBadge(slug) {
-    const m = this.materialMeta[slug] || { label: slug, color: '#059669', bg: '#ECFDF5', emoji: '♻️' };
-    return `<span class="mat-badge" style="color:${m.color};background:${m.bg};border:1px solid ${m.color}30;">
-      ${this.getMaterialIconSVG(slug, m.color, 13)}${m.label}
+    const m = this.materialMeta[slug] || { label: slug, color: '#059669', bg: '#ECFDF5' };
+    return `<span class="mat-badge" style="--material-color:${m.color};background:${m.bg};border:1px solid ${m.color}30;">
+      ${this.getMaterialIcon(slug, 22)}${m.label}
     </span>`;
   },
 
-  createMapPinHTML(point, isSelected = false) {
-    const count = point.materials ? point.materials.length : 1;
+  createMapPinHTML(isSelected = false, materialsCount = 0) {
+    const countHtml = materialsCount > 0 ? `<span class="pin-count">${materialsCount}</span>` : '';
     return `
       <div class="custom-pin ${isSelected ? 'pin-selected' : ''}">
         <div class="pin-head">
-          ${this.recycleSVG(16)}
-          <span class="pin-count">${count}</span>
+          ${this.recycleSVG(15)}
+          ${countHtml}
         </div>
         <div class="pin-tail"></div>
       </div>
