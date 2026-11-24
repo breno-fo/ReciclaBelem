@@ -411,30 +411,27 @@ const App = {
 
     // Eventos de arraste no mapa para o Pin Central Fixo (Selecionar Localização)
     this.map.on('movestart', () => {
-      if (this.mapClickMode === 'pickAdminCoords') {
+      if (this.mapClickMode === 'pickAdminCoords' || this.mapClickMode === 'pickUserCoords') {
         const pin = document.getElementById('map-center-picker');
         if (pin) pin.classList.add('is-dragging');
       }
     });
 
     this.map.on('moveend', () => {
-      if (this.mapClickMode === 'pickAdminCoords') {
+      if (this.mapClickMode === 'pickAdminCoords' || this.mapClickMode === 'pickUserCoords') {
         const pin = document.getElementById('map-center-picker');
         if (pin) pin.classList.remove('is-dragging');
         this.schedulePickerPreviewUpdate();
       }
     });
 
-    // Evento de clique no mapa (centraliza no clique durante picker ou define posição do usuário)
+    // Evento de clique no mapa (centraliza no clique durante o modo de pinagem)
     this.map.on('click', (e) => {
       const lat = Number(e.latlng.lat.toFixed(5));
       const lng = Number(e.latlng.lng.toFixed(5));
 
-      if (this.mapClickMode === 'pickAdminCoords') {
+      if (this.mapClickMode === 'pickAdminCoords' || this.mapClickMode === 'pickUserCoords') {
         this.map.panTo([lat, lng], { animate: true });
-      } else if (this.mapClickMode === 'setUserLoc') {
-        this.mapClickMode = null;
-        this.setUserLocation(lat, lng, 'Posição escolhida no mapa');
       }
     });
   },
@@ -781,9 +778,24 @@ const App = {
 
   enableClickToSetUserLocation() {
     this.closeLocationModal();
+    this.mapClickMode = 'pickUserCoords';
+    this.pendingPickerResult = null;
     this.switchTab('mapa');
-    this.mapClickMode = 'setUserLoc';
-    this.showToast('👆 Toque em qualquer ponto do mapa para definir sua localização');
+
+    const tabMapa = document.getElementById('tab-mapa');
+    if (tabMapa) tabMapa.classList.add('picking-active');
+    const wrapper = document.getElementById('map-wrapper');
+    if (wrapper) wrapper.classList.add('picking-location');
+
+    setTimeout(() => {
+      if (this.map) {
+        this.map.invalidateSize();
+        if (this.userLocation) {
+          this.map.setView([this.userLocation.lat, this.userLocation.lng], 15);
+        }
+        this.schedulePickerPreviewUpdate();
+      }
+    }, 180);
   },
 
   setUserLocation(lat, lng, label = 'GPS ativo') {
@@ -1824,6 +1836,12 @@ const App = {
       neighborhood: 'Belém'
     };
 
+    if (this.mapClickMode === 'pickUserCoords') {
+      this.exitMapPickerMode(false);
+      this.setUserLocation(res.lat, res.lng, 'GPS ativo');
+      return;
+    }
+
     document.getElementById('pt-lat').value = res.lat;
     document.getElementById('pt-lng').value = res.lng;
     document.getElementById('pt-address').value = res.street;
@@ -1836,15 +1854,16 @@ const App = {
     const btnPick = document.getElementById('btn-pick-map');
     if (btnPick) btnPick.textContent = '🗺️ Local confirmado! (Clique para alterar no mapa)';
 
-    this.exitMapPickerMode();
+    this.exitMapPickerMode(true);
     this.showToast('📍 Endereço e bairro preenchidos! Edite manualmente se precisar.');
   },
 
   cancelMapPicker() {
-    this.exitMapPickerMode();
+    const isAdmin = this.mapClickMode === 'pickAdminCoords';
+    this.exitMapPickerMode(isAdmin);
   },
 
-  exitMapPickerMode() {
+  exitMapPickerMode(returnToAdmin = true) {
     this.mapClickMode = null;
     const tabMapa = document.getElementById('tab-mapa');
     if (tabMapa) tabMapa.classList.remove('picking-active');
@@ -1853,8 +1872,10 @@ const App = {
     if (this.map) {
       setTimeout(() => this.map.invalidateSize(), 200);
     }
-    this.switchTab('admin');
-    this.switchAdminSubtab('pontos');
+    if (returnToAdmin) {
+      this.switchTab('admin');
+      this.switchAdminSubtab('pontos');
+    }
   },
 
   async savePoint(event) {
