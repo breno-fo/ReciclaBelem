@@ -11,7 +11,8 @@ window.ReciclaIcons = {
     eletronicos: { label: 'Eletrônicos', color: '#7C3AED', bg: '#F5F3FF' },
     oleo: { label: 'Óleo', color: '#EA580C', bg: '#FFF7ED' },
     pilhas: { label: 'Pilhas', color: '#C2410C', bg: '#FFEDD5' },
-    organicos: { label: 'Orgânicos', color: '#78350F', bg: '#FEF3C7' }
+    organicos: { label: 'Orgânicos', color: '#78350F', bg: '#FEF3C7' },
+    moveis: { label: 'Móveis', color: '#92400E', bg: '#FEF3C7' }
   },
 
   /**
@@ -66,14 +67,18 @@ window.ReciclaIcons = {
         return `<svg ${common}><rect x="6" y="4" width="12" height="18" rx="2"/><path d="M10 2h4"/><path d="M12 10v4"/><path d="M10 12h4"/></svg>`;
       case 'organicos':
         return `<svg ${common}><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>`;
+      case 'moveis':
+        return `<svg ${common}><path d="M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3"/><path d="M2 11v5a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v2H6v-2a2 2 0 0 0-4 0Z"/><path d="M4 18v2"/><path d="M20 18v2"/></svg>`;
       default:
         return `<svg ${common}><circle cx="12" cy="12" r="9"/></svg>`;
     }
   },
 
   getMaterialIcon(slug, size = 20) {
-    if (!Object.prototype.hasOwnProperty.call(this.materialMeta, slug)) {
-      return this.getMaterialIconSVG(slug, '#059669', size);
+    const pixelSlugs = new Set(['plastico', 'papel', 'vidro', 'metal', 'eletronicos', 'oleo', 'pilhas', 'organicos']);
+    if (!pixelSlugs.has(slug)) {
+      const m = this.materialMeta[slug];
+      return this.getMaterialIconSVG(slug, m ? m.color : '#059669', size);
     }
     return `<img class="material-pixel-icon" src="./assets/materials/compact/${slug}.webp" width="${size}" height="${size}" alt="" aria-hidden="true" />`;
   },

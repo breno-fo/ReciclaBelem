@@ -538,6 +538,21 @@ const DEFAULT_DB = {
       ],
       "status": "ativo",
       "description": "Contêiner Verde - Iglu Material Reciclável Misturado. Ponto público de entrega voluntária em Belém."
+    },
+    {
+      "id": "pt-30",
+      "name": "Ponto Ecoponto Parque São Joaquim",
+      "neighborhood": "Maracangalha",
+      "address": "Rua Sol Nasce Para Todos com Travessa Alferes Costa",
+      "hours": "Seg a Sex • 08:00 - 17:00 | Sáb • 08:00 - 12:00",
+      "phone": "",
+      "lat": -1.40855,
+      "lng": -48.47686,
+      "materials": [
+        "moveis"
+      ],
+      "status": "ativo",
+      "description": "Ecoponto do Parque São Joaquim. Recebe móveis inservíveis (sofás, armários, colchões e madeira) para destinação responsável."
     }
   ],
   "materialsGuide": [
@@ -644,6 +659,18 @@ const DEFAULT_DB = {
       "canRecycle": "Cascas de frutas e verduras, borra de café com filtro, cascas de ovo trituradas, folhas secas e podas.",
       "cannotRecycle": "Carnes, ossos, laticínios, fezes de animais domésticos e restos de comida muito gordurosos.",
       "prepTip": "Misture resíduos úmidos (cascas de frutas) com serragem ou folhas secas para produzir adubo rico sem mau cheiro!"
+    },
+    {
+      "id": "mat-9",
+      "slug": "moveis",
+      "name": "Móveis e Volumosos",
+      "binColorName": "Ecoponto / PEV",
+      "colorHex": "#92400E",
+      "bgSoft": "#FEF3C7",
+      "whereToThrow": "Ecopontos Municipais (como o Ecoponto Parque São Joaquim)",
+      "canRecycle": "Sofás, armários, mesas, cadeiras, guarda-roupas, estantes, colchões e madeiras de móveis desmontados.",
+      "cannotRecycle": "Resíduos hospitalares, lixo doméstico misturado ou produtos químicos inflamáveis.",
+      "prepTip": "Se possível, desmonte peças grandes para facilitar o transporte até o Ecoponto ou doe móveis em bom estado."
     }
   ],
   "incentives": [
@@ -785,6 +812,20 @@ window.ReciclaDB = {
           if (!Array.isArray(parsed.incentives) || parsed.incentives.length === 0) {
             parsed.incentives = JSON.parse(JSON.stringify(DEFAULT_DB.incentives));
             changed = true;
+          }
+
+          // Garante que novos pontos/materiais adicionados ao catalogo padrao aparecam mesmo com localStorage antigo
+          for (const defPt of DEFAULT_DB.points) {
+            if (!parsed.points.some((p) => p.id === defPt.id)) {
+              parsed.points.push(JSON.parse(JSON.stringify(defPt)));
+              changed = true;
+            }
+          }
+          for (const defMat of DEFAULT_DB.materialsGuide) {
+            if (!parsed.materialsGuide.some((m) => m.id === defMat.id || m.slug === defMat.slug)) {
+              parsed.materialsGuide.push(JSON.parse(JSON.stringify(defMat)));
+              changed = true;
+            }
           }
 
           const mockedIds = new Set(['news-1', 'news-2', 'news-3']);
