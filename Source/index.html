@@ -197,6 +197,7 @@
         <div class="splash-content">
           <div class="splash-logo-box">
             <img class="splash-mucura-img" src="./assets/icons/logo_mucura_splash-pop-384.png" alt="Mucura, mascote do ReciclaBelém" />
+            <img class="splash-mucura-img splash-mucura-wink" src="./assets/icons/logo_mucura_splash-wink-384.png" alt="" aria-hidden="true" />
           </div>
           <h2><img src="./assets/brand-wordmark.svg" alt="ReciclaBelém" /></h2>
           <p>Mapa de coleta seletiva</p>
@@ -473,6 +474,29 @@
               <span class="distance-badge" id="admin-stats-badge"></span>
             </div>
 
+            <!-- Barra de Sessão Ativa do Operador (Supabase) -->
+            <div class="operator-session-bar" id="operator-session-bar" style="display:none;">
+              <div>
+                <strong id="operator-name-label">Operador</strong>
+                <small id="operator-timer-label">Sessão ativa</small>
+              </div>
+              <button type="button" class="icon-btn" onclick="App.logoutOperator()">Sair</button>
+            </div>
+
+            <!-- Tela de Chave de Acesso do Operador (quando Supabase está ativo) -->
+            <div class="operator-auth-gate" id="operator-auth-gate" style="display:none;">
+              <h3>Acesso Restrito do Operador</h3>
+              <p>Insira a chave de acesso temporária fornecida pelo administrador para liberar edição e sincronização com o banco de dados online.</p>
+              <form onsubmit="App.submitOperatorKey(event)" style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
+                <input type="password" id="operator-access-key" class="form-input" placeholder="Chave de acesso do operador" autocomplete="off" required />
+                <div id="operator-auth-error" style="display:none;font-size:0.78rem;font-weight:700;color:#b91c1c;"></div>
+                <button type="submit" class="btn btn-primary" id="btn-operator-login">
+                  Desbloquear Painel do Operador
+                </button>
+              </form>
+            </div>
+
+            <div id="admin-protected-content">
             <!-- Sub-abas do Dashboard -->
             <div class="admin-subtabs">
               <button class="admin-subtab active" data-subtab="pontos" onclick="App.switchAdminSubtab('pontos')">Pontos</button>
@@ -1019,8 +1043,8 @@
   <script src="./vendor/leaflet/leaflet.js"></script>
 
   <!-- Scripts do Aplicativo -->
-  <script src="js/db.js?v=20261124i"></script>
+  <script src="js/db.js?v=20261124m"></script>
   <script src="js/icons.js?v=20261124g"></script>
-  <script src="js/app.js?v=20261124k"></script>
+  <script src="js/app.js?v=20261124m"></script>
 </body>
 </html>

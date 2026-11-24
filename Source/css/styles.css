@@ -2448,6 +2448,49 @@ body.fullscreen-mode .android-gesture-bar {
   user-select: none;
 }
 
+.operator-auth-gate {
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 18px;
+}
+
+.operator-auth-gate h3 {
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: var(--emerald-900);
+  margin-bottom: 6px;
+}
+
+.operator-auth-gate p {
+  font-size: 0.78rem;
+  line-height: 1.48;
+  color: var(--text-secondary);
+}
+
+.operator-session-bar {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.operator-session-bar strong {
+  display: block;
+  font-size: 0.8rem;
+  color: #065f46;
+}
+
+.operator-session-bar small {
+  display: block;
+  font-size: 0.7rem;
+  color: #047857;
+}
+
 /* Seção Sobre Nós (Equipe IEP & Missão) */
 .about-mission-card {
   background: #ffffff;

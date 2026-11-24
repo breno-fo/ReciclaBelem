@@ -2,7 +2,7 @@
  * ReciclaBelém - Service Worker para Modo Offline (PWA + Mapa em Cache)
  */
 
-const CACHE_NAME = 'recicla-belem-shell-v26';
+const CACHE_NAME = 'recicla-belem-shell-v27';
 const TILE_CACHE = 'recicla-belem-map-tiles';
 const TILE_HOSTS = new Set(['tile.openstreetmap.de', 'server.arcgisonline.com']);
 const APP_SHELL = [
@@ -34,6 +34,7 @@ const APP_SHELL = [
   './assets/icons/logo_mucura_round-512.png',
   './assets/icons/logo_mucura_maskable-512.png',
   './assets/icons/logo_mucura_splash-pop-384.png',
+  './assets/icons/logo_mucura_splash-wink-384.png',
   './assets/icons/logo_selo_round-32.png',
   './assets/icons/logo_selo_round-48.png',
   './assets/icons/logo_selo_round-96.png',

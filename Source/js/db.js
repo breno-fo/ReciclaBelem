@@ -6,6 +6,14 @@
  */
 
 const STORAGE_KEY = 'reciclaBelem_db_v1';
+const OPERATOR_SESSION_KEY = 'reciclaBelem_operator_session_v1';
+
+// Preencha com os dados do seu projeto Supabase (Project Settings -> API) e mude enabled para true
+const SUPABASE_CONFIG = {
+  enabled: false,
+  url: '',
+  anonKey: ''
+};
 
 const DEFAULT_DB = {
   "meta": {
@@ -844,8 +852,98 @@ const DEFAULT_DB = {
 window.ReciclaDB = {
   data: null,
   serverAvailable: false,
+  supabaseEnabled: !!(SUPABASE_CONFIG.enabled && SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey),
+
+  async supabaseRpc(fnName, params = {}) {
+    if (!this.supabaseEnabled) return null;
+    const base = SUPABASE_CONFIG.url.replace(/\/+$/, '');
+    const res = await fetch(`${base}/rest/v1/rpc/${fnName}`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_CONFIG.anonKey,
+        Authorization: `Bearer ${SUPABASE_CONFIG.anonKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    });
+    if (!res.ok) throw new Error(`Supabase HTTP ${res.status}`);
+    return res.json();
+  },
+
+  getOperatorSession() {
+    try {
+      const raw = localStorage.getItem(OPERATOR_SESSION_KEY);
+      if (!raw) return null;
+      const sess = JSON.parse(raw);
+      if (!sess || !sess.token || !sess.expiresAt) return null;
+      if (new Date(sess.expiresAt).getTime() <= Date.now()) {
+        localStorage.removeItem(OPERATOR_SESSION_KEY);
+        return null;
+      }
+      return sess;
+    } catch (e) {
+      return null;
+    }
+  },
+
+  async operatorLogin(accessKey) {
+    if (!this.supabaseEnabled) {
+      return { ok: false, error: 'Supabase ainda não configurado em js/db.js.' };
+    }
+    try {
+      const res = await this.supabaseRpc('operator_login', { p_access_key: accessKey });
+      if (res && res.ok && res.token) {
+        localStorage.setItem(
+          OPERATOR_SESSION_KEY,
+          JSON.stringify({
+            token: res.token,
+            operatorName: res.operatorName || 'Operador',
+            expiresAt: res.expiresAt
+          })
+        );
+      }
+      return res || { ok: false, error: 'Resposta inválida do servidor.' };
+    } catch (err) {
+      return { ok: false, error: 'Erro de conexão com o Supabase.' };
+    }
+  },
+
+  async validateOperatorSession() {
+    const sess = this.getOperatorSession();
+    if (!sess) return { ok: false };
+    if (!this.supabaseEnabled) return { ok: true, ...sess };
+    try {
+      const res = await this.supabaseRpc('operator_validate_session', { p_token: sess.token });
+      if (!res || !res.ok) {
+        localStorage.removeItem(OPERATOR_SESSION_KEY);
+        return { ok: false };
+      }
+      return { ok: true, ...sess, operatorName: res.operatorName, expiresAt: res.expiresAt };
+    } catch (e) {
+      // Se estiver offline temporariamente, respeita o expiresAt local
+      return { ok: true, ...sess };
+    }
+  },
+
+  operatorLogout() {
+    localStorage.removeItem(OPERATOR_SESSION_KEY);
+  },
 
   async init() {
+    // 0. Se Supabase estiver ativo, tenta buscar o banco oficial na nuvem
+    if (this.supabaseEnabled) {
+      try {
+        const remote = await this.supabaseRpc('get_public_db');
+        if (remote && Array.isArray(remote.points)) {
+          this.data = remote;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
+          return this.data;
+        }
+      } catch (err) {
+        console.warn('Supabase indisponível no momento, usando fallback local.');
+      }
+    }
+
     // 1. Tenta carregar do servidor Node.js (/api/db) se estiver rodando
     try {
       const res = await fetch('/api/db', { cache: 'no-store' });
@@ -951,11 +1049,31 @@ window.ReciclaDB = {
     return this.data;
   },
 
-  async save() {
+  async save(action = 'UPDATE', summary = 'Atualização no painel do operador') {
     if (!this.data) return;
     this.data.meta = this.data.meta || {};
     this.data.meta.lastUpdated = new Date().toISOString();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
+
+    if (this.supabaseEnabled) {
+      const sess = this.getOperatorSession();
+      if (sess && sess.token) {
+        try {
+          const res = await this.supabaseRpc('operator_save_db', {
+            p_token: sess.token,
+            p_data: this.data,
+            p_action: action,
+            p_summary: summary
+          });
+          if (res && !res.ok) {
+            localStorage.removeItem(OPERATOR_SESSION_KEY);
+            window.dispatchEvent(new CustomEvent('recicla:operator-expired'));
+          }
+        } catch (e) {
+          console.warn('Sem conexão para sincronizar com Supabase agora; salvo localmente.');
+        }
+      }
+    }
 
     if (this.serverAvailable) {
       try {

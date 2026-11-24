@@ -176,6 +176,13 @@ const App = {
     }
     this.updateOfflineButtonState();
 
+    // 9. Monitora sessão e expiração da chave do Operador (Supabase)
+    this.refreshOperatorGate();
+    setInterval(() => this.refreshOperatorGate(), 30000);
+    window.addEventListener('recicla:operator-expired', () => {
+      this.refreshOperatorGate();
+      this.showToast('Sessão do operador expirada. Insira sua chave novamente.');
+    });
   },
 
   launchReciclaBelem() {
@@ -199,7 +206,7 @@ const App = {
       } else {
         this.maybePromptOfflineMap(500);
       }
-    }, 3500);
+    }, 5000);
   },
 
   applyAppLogo(logoKey) {
@@ -2594,6 +2601,80 @@ const App = {
     if (tabName === 'mapa' && this.map) {
       setTimeout(() => this.map.invalidateSize(), 150);
     }
+    if (tabName === 'admin') {
+      this.refreshOperatorGate();
+    }
+  },
+
+  async refreshOperatorGate() {
+    const gate = document.getElementById('operator-auth-gate');
+    const content = document.getElementById('admin-protected-content');
+    const bar = document.getElementById('operator-session-bar');
+    if (!gate || !content) return;
+
+    if (!ReciclaDB.supabaseEnabled) {
+      gate.style.display = 'none';
+      if (bar) bar.style.display = 'none';
+      content.style.display = 'block';
+      return;
+    }
+
+    const sess = await ReciclaDB.validateOperatorSession();
+    if (sess && sess.ok) {
+      gate.style.display = 'none';
+      content.style.display = 'block';
+      if (bar) {
+        bar.style.display = 'flex';
+        const nameEl = document.getElementById('operator-name-label');
+        const timerEl = document.getElementById('operator-timer-label');
+        if (nameEl) nameEl.textContent = `Operador: ${sess.operatorName || 'Autorizado'}`;
+        if (timerEl && sess.expiresAt) {
+          const diffMs = Math.max(0, new Date(sess.expiresAt).getTime() - Date.now());
+          const hrs = Math.floor(diffMs / 3600000);
+          const mins = Math.floor((diffMs % 3600000) / 60000);
+          timerEl.textContent = `Sessão expira em ${String(hrs).padStart(2, '0')}h ${String(mins).padStart(2, '0')}m`;
+        }
+      }
+    } else {
+      gate.style.display = 'block';
+      if (bar) bar.style.display = 'none';
+      content.style.display = 'none';
+    }
+  },
+
+  async submitOperatorKey(event) {
+    event.preventDefault();
+    const input = document.getElementById('operator-access-key');
+    const errEl = document.getElementById('operator-auth-error');
+    const btn = document.getElementById('btn-operator-login');
+    const key = input ? input.value.trim() : '';
+
+    if (errEl) errEl.style.display = 'none';
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Validando chave...';
+    }
+
+    const res = await ReciclaDB.operatorLogin(key);
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Desbloquear Painel do Operador';
+    }
+
+    if (res && res.ok) {
+      if (input) input.value = '';
+      await this.refreshOperatorGate();
+      this.showToast(`Bem-vindo, ${res.operatorName || 'Operador'}!`);
+    } else if (errEl) {
+      errEl.textContent = res?.error || 'Chave inválida ou expirada.';
+      errEl.style.display = 'block';
+    }
+  },
+
+  logoutOperator() {
+    ReciclaDB.operatorLogout();
+    this.refreshOperatorGate();
+    this.showToast('Sessão do operador encerrada.');
   },
 
   switchAdminSubtab(subtab) {
