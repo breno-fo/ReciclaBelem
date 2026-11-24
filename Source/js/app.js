@@ -1295,8 +1295,11 @@ const App = {
   },
 
   buildGoogleMapsReviewUrl(point) {
-    const query = `${point.name}, ${point.address || ''}, Belém, PA`;
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+    const coords = `${point.lat},${point.lng}`;
+    if (point.googlePlaceId) {
+      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(coords)}&query_place_id=${encodeURIComponent(point.googlePlaceId)}`;
+    }
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(coords)}`;
   },
 
   openPointDetails(pointId) {
