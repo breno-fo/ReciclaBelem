@@ -62,6 +62,7 @@ const App = {
     // Inicia bateria persistente (descarrega em 1 hora) e oscilação realista do 5G
     this.startBatteryDrain();
     this.startNetworkOscillation();
+    this.initGpsPillState();
 
     // 1. Inicializa o Banco de Dados com proteção
     try {
@@ -660,11 +661,51 @@ const App = {
     }
   },
 
+  updateGpsPill(state) {
+    const btn = document.getElementById('header-loc-btn');
+    const txt = document.getElementById('header-loc-text');
+    if (!btn || !txt) return;
+
+    btn.classList.remove('loc-active', 'loc-denied');
+    if (state === 'active') {
+      btn.classList.add('loc-active');
+      txt.textContent = 'GPS ativo';
+    } else if (state === 'denied') {
+      btn.classList.add('loc-denied');
+      txt.textContent = 'GPS não ativo';
+    } else {
+      txt.textContent = 'Ativar GPS';
+    }
+  },
+
+  async initGpsPillState() {
+    this.updateGpsPill('idle');
+    try {
+      if (navigator.permissions && navigator.permissions.query) {
+        const perm = await navigator.permissions.query({ name: 'geolocation' });
+        if (perm.state === 'denied') {
+          this.updateGpsPill('denied');
+        }
+        perm.onchange = () => {
+          if (perm.state === 'denied') this.updateGpsPill('denied');
+          else if (perm.state === 'prompt' && !this.userLocation) this.updateGpsPill('idle');
+        };
+      }
+    } catch (e) {}
+  },
+
+  denyLocationPermission() {
+    this.userLocation = null;
+    this.updateGpsPill('denied');
+    this.closeLocationModal();
+    this.showToast('📍 GPS não ativo. Toque em "GPS não ativo" se quiser ativar depois.');
+  },
+
   requestBrowserGeolocation() {
     this.closeLocationModal();
     if (!navigator.geolocation) {
-      this.showToast('GPS não suportado neste navegador. Usando centro de Belém.');
-      this.useSimulatedBelemLocation();
+      this.updateGpsPill('denied');
+      this.showToast('GPS não suportado neste navegador.');
       return;
     }
 
@@ -673,11 +714,16 @@ const App = {
       (pos) => {
         const lat = Number(pos.coords.latitude.toFixed(5));
         const lng = Number(pos.coords.longitude.toFixed(5));
-        this.setUserLocation(lat, lng, 'GPS Ativo');
+        this.setUserLocation(lat, lng, 'GPS ativo');
       },
-      () => {
-        this.showToast('Permissão negada ou PC sem GPS. Simulando posição em Belém!');
-        this.useSimulatedBelemLocation();
+      (err) => {
+        if (err && err.code === 1) {
+          this.updateGpsPill('denied');
+          this.showToast('Permissão de GPS negada. Você pode simular ou escolher no mapa.');
+        } else {
+          this.showToast('PC sem GPS ou sinal indisponível. Simulando posição em Belém!');
+          this.useSimulatedBelemLocation();
+        }
       },
       { enableHighAccuracy: true, timeout: 7000 }
     );
@@ -686,7 +732,7 @@ const App = {
   useSimulatedBelemLocation() {
     this.closeLocationModal();
     // Praça da República - Centro de Belém
-    this.setUserLocation(-1.4539, -48.4934, 'Belém (Simulado)');
+    this.setUserLocation(-1.4539, -48.4934, 'GPS ativo');
   },
 
   enableClickToSetUserLocation() {
@@ -696,14 +742,11 @@ const App = {
     this.showToast('👆 Toque em qualquer ponto do mapa para definir sua localização');
   },
 
-  setUserLocation(lat, lng, label = 'GPS Ativo') {
+  setUserLocation(lat, lng, label = 'GPS ativo') {
     this.userLocation = { lat, lng, label };
 
-    // Atualiza botão no cabeçalho
-    const btn = document.getElementById('header-loc-btn');
-    const txt = document.getElementById('header-loc-text');
-    btn.classList.add('loc-active');
-    txt.textContent = label;
+    // Atualiza botão no cabeçalho para verde "GPS ativo"
+    this.updateGpsPill('active');
 
     // Adiciona ou move o marcador azul do usuário no mapa
     if (this.userMarker) {
