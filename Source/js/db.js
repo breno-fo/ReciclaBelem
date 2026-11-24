@@ -9,10 +9,10 @@ const STORAGE_KEY = 'reciclaBelem_db_v1';
 const OPERATOR_SESSION_KEY = 'reciclaBelem_operator_session_v1';
 
 // Preencha com os dados do seu projeto Supabase (Project Settings -> API) e mude enabled para true
-// Preencha com a Project URL exata do seu Supabase e mude enabled para true
+// Configuração oficial do Supabase (ReciclaBelém)
 const SUPABASE_CONFIG = {
-  enabled: false,
-  url: '',
+  enabled: true,
+  url: 'https://cyvjczsqcncqrxhvncgd.supabase.co',
   anonKey: 'sb_publishable_1-SLBFPmZ3sFsL3T_uc3lA_utd-Vd6M'
 };
 

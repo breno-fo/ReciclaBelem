@@ -63,9 +63,8 @@
   - `pt-34`: Ponto Shopping Bosque Grão-Pará (E-lixo) (`eletronicos`, `pilhas`, `-1.39012, -48.46515`)
 - **Regra de Sincronização:** Sempre que alterar `Source/data/database.json`, atualize também `DEFAULT_DB` em `Source/js/db.js`. `ReciclaDB.init()` faz merge automático de novos pontos/materiais em `localStorage` existentes.
 - **Integração Supabase (`Source/supabase/schema.sql` + `Source/js/db.js`):**
-  - `schema.sql` já foi executado pelo usuário no Supabase.
-  - A `anonKey` (`sb_publishable_1-SLBFPmZ3sFsL3T_uc3lA_utd-Vd6M`) já está preenchida em `SUPABASE_CONFIG` no topo de `Source/js/db.js`.
-  - **O que falta para ativar o Supabase:** preencher a **Project URL exata** (`url: 'https://....supabase.co'`) em `SUPABASE_CONFIG` e mudar `enabled: true`, além de rodar o `INSERT` de cadastro do operador no SQL Editor do Supabase (ver `Source/supabase/COMO_CONFIGURAR.md`).
+  - `schema.sql` já foi executado no Supabase e `SUPABASE_CONFIG` já está conectado e ativo (`enabled: true`, `url: 'https://cyvjczsqcncqrxhvncgd.supabase.co'`).
+  - **O que falta no Supabase:** cadastrar o(s) operador(es) na tabela `operators` via SQL Editor (`INSERT` em `Source/supabase/COMO_CONFIGURAR.md`) e fazer o primeiro login no Dashboard para enviar o snapshot inicial para `app_database`.
 
 ---
 
