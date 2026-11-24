@@ -271,6 +271,13 @@ body.split-mode #single-app-stage {
   letter-spacing: 0.02em;
   flex-shrink: 0;
   position: relative;
+  z-index: 1060;
+  transition: background 0.25s ease;
+}
+
+.phone-frame:has(.android-launcher.active) .android-statusbar {
+  background: transparent;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
 }
 
 /* Câmera Frontal (Punch-Hole Android) */
@@ -724,6 +731,20 @@ body.fullscreen-mode .android-statusbar {
   align-items: center;
   gap: 5px;
   transition: all 0.18s ease;
+}
+
+.filter-icon,
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.material-pixel-icon {
+  display: inline-block;
+  flex: 0 0 auto;
+  object-fit: contain;
+  image-rendering: pixelated;
 }
 
 .filter-chip:hover {
@@ -1962,7 +1983,7 @@ body.fullscreen-mode .map-wrapper {
    ========================================================================== */
 .android-launcher {
   position: absolute;
-  top: 30px;
+  top: 0;
   left: 0;
   right: 0;
   bottom: 0;
@@ -1973,7 +1994,7 @@ body.fullscreen-mode .map-wrapper {
   display: none;
   flex-direction: column;
   justify-content: space-between;
-  padding: 24px 20px 30px;
+  padding: 46px 20px 30px;
   overflow: hidden;
 }
 
