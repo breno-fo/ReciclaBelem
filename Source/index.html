@@ -884,14 +884,14 @@
       <!-- ==============================================================
            MODAL 2: DETALHES DO PONTO E NAVEGAÇÃO GOOGLE MAPS
            ============================================================== -->
-      <div class="modal-backdrop" id="point-detail-modal">
+      <div class="modal-backdrop" id="point-detail-modal" onclick="if (event.target === this) App.closePointModal()">
         <div class="modal-sheet" id="point-detail-content"></div>
       </div>
 
       <!-- ==============================================================
            MODAL 3: BAIXAR MAPA PARA USAR OFFLINE (DETECÇÃO DADOS MÓVEIS)
            ============================================================== -->
-      <div class="modal-backdrop" id="offline-map-modal">
+      <div class="modal-backdrop" id="offline-map-modal" onclick="if (event.target === this) App.dismissOfflineModal()">
         <div class="modal-sheet">
           <div class="sheet-handle"></div>
           <div style="text-align:center;margin-bottom:12px;">

@@ -1294,6 +1294,11 @@ const App = {
     return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest)}&travelmode=driving`;
   },
 
+  buildGoogleMapsReviewUrl(point) {
+    const query = `${point.name}, ${point.address || ''}, Belém, PA`;
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+  },
+
   openPointDetails(pointId) {
     const pt = (ReciclaDB.data?.points || []).find((p) => p.id === pointId);
     if (!pt) return;
@@ -1319,6 +1324,7 @@ const App = {
 
     const badges = (pt.materials || []).map((m) => ReciclaIcons.getMaterialBadge(m)).join('');
     const gmapsUrl = this.buildGoogleMapsNavUrl(pt);
+    const gmapsReviewUrl = this.buildGoogleMapsReviewUrl(pt);
 
     const content = document.getElementById('point-detail-content');
     content.innerHTML = `
@@ -1354,8 +1360,11 @@ const App = {
           Iniciar Modo Navegação no Google Maps
         </a>
         <button class="btn btn-secondary" onclick="App.closePointModal();App.previewRouteOnMap('${pt.id}');">
-          Traçar Linha de Rota no Mapa do App
+          Ver Trajeto no Mapa (2D)
         </button>
+        <a class="btn btn-secondary" href="${gmapsReviewUrl}" target="_blank" rel="noopener noreferrer" style="padding:11px;font-size:0.84rem;">
+          Avaliar no Google Maps
+        </a>
       </div>
     `;
 
@@ -1366,48 +1375,64 @@ const App = {
     document.getElementById('point-detail-modal').classList.remove('open');
   },
 
-  previewRouteOnMap(pointId) {
+  async previewRouteOnMap(pointId) {
     const pt = (ReciclaDB.data?.points || []).find((p) => p.id === pointId);
     if (!pt || !this.map) return;
+
+    if (!this.userLocation) {
+      this.showToast('Ative ou escolha sua posição no mapa para ver o trajeto.');
+      this.openLocationModal();
+      return;
+    }
 
     this.togglePointsDrawer(false);
     this.selectedPointId = pointId;
     this.renderMapAndPoints();
 
-    // Se o usuário ainda não ativou localização, usa posição simulada no centro de Belém para demonstrar a rota
-    if (!this.userLocation) {
-      this.setUserLocation(-1.4539, -48.4934, 'Belém (Simulado)');
-    }
-
     if (this.routeLine) {
       this.map.removeLayer(this.routeLine);
+      this.routeLine = null;
     }
-
-    const latlngs = [
-      [this.userLocation.lat, this.userLocation.lng],
-      [Number(pt.lat), Number(pt.lng)]
-    ];
-
-    this.routeLine = L.polyline(latlngs, {
-      color: '#059669',
-      weight: 4,
-      dashArray: '8, 8'
-    }).addTo(this.map);
-
-    this.map.fitBounds(this.routeLine.getBounds(), { padding: [45, 45] });
-
-    const dist = this.calculateDistanceKm(
-      this.userLocation.lat,
-      this.userLocation.lng,
-      Number(pt.lat),
-      Number(pt.lng)
-    );
-    const estMinutes = Math.max(2, Math.round((dist / 25) * 60));
 
     const banner = document.getElementById('route-banner');
     const text = document.getElementById('route-banner-text');
-    text.innerHTML = `🧭 <strong>${this.escapeHtml(pt.name)}</strong> • ${dist.toFixed(1)} km (~${estMinutes} min)`;
+    text.innerHTML = `Calculando trajeto 2D para <strong>${this.escapeHtml(pt.name)}</strong>...`;
     banner.classList.add('visible');
+
+    let routeCoords = null;
+    let distKm = null;
+    let estMinutes = null;
+
+    try {
+      const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${this.userLocation.lng},${this.userLocation.lat};${pt.lng},${pt.lat}?overview=full&geometries=geojson`;
+      const res = await fetch(osrmUrl);
+      if (res.ok) {
+        const data = await res.json();
+        const route = data.routes && data.routes[0];
+        if (route && route.geometry && Array.isArray(route.geometry.coordinates)) {
+          routeCoords = route.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+          distKm = route.distance / 1000;
+          estMinutes = Math.max(1, Math.round(route.duration / 60));
+        }
+      }
+    } catch (e) {}
+
+    if (!routeCoords || routeCoords.length < 2) {
+      banner.classList.remove('visible');
+      this.showToast('Não foi possível calcular o trajeto pelas ruas agora.');
+      return;
+    }
+
+    this.routeLine = L.polyline(routeCoords, {
+      color: '#059669',
+      weight: 5,
+      opacity: 0.9,
+      lineCap: 'round',
+      lineJoin: 'round'
+    }).addTo(this.map);
+
+    this.map.fitBounds(this.routeLine.getBounds(), { padding: [45, 45] });
+    text.innerHTML = `<strong>${this.escapeHtml(pt.name)}</strong> • ${distKm.toFixed(1)} km (~${estMinutes} min)`;
 
     // Rola para o topo do mapa
     document.querySelector('.app-content').scrollTo({ top: 0, behavior: 'smooth' });
