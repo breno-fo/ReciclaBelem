@@ -853,7 +853,7 @@
       <!-- ==============================================================
            MODAL 1: PERMISSÃO DE COLETA DE LOCALIZAÇÃO (ANDROID GPS)
            ============================================================== -->
-      <div class="modal-backdrop" id="location-modal">
+      <div class="modal-backdrop" id="location-modal" onclick="if (event.target === this) App.closeLocationModal()">
         <div class="modal-sheet">
           <div class="sheet-handle"></div>
           <div style="text-align:center;margin-bottom:14px;">
