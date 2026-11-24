@@ -633,7 +633,7 @@ const App = {
           })
         );
         const unpackPct = 72 + Math.round(((i + batch.length) / tilesIndex.length) * 28);
-        setProgress(Math.min(100, unpackPct), `Salvando mapa offline (${Math.min(i + batch.length, tilesIndex.length)}/${tilesIndex.length} blocos)...`);
+        setProgress(Math.min(100, unpackPct), 'Salvando mapa offline no aparelho...');
       }
 
       const sizeMB = this._offlinePackSizeMB || Number((arrayBuffer.byteLength / (1024 * 1024)).toFixed(1));
@@ -651,7 +651,7 @@ const App = {
 
       setTimeout(() => {
         this.dismissOfflineModal();
-        this.showToast(`✅ Mapa de Belém, Icoaraci e Outeiro (${tilesIndex.length} blocos, ${String(sizeMB).replace('.', ',')} MB) salvo offline!`);
+        this.showToast(`✅ Mapa de Belém, Icoaraci e Outeiro (${String(sizeMB).replace('.', ',')} MB) salvo offline!`);
       }, 400);
     } catch (err) {
       if (actionsWrap) actionsWrap.style.display = 'flex';
