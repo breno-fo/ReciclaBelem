@@ -2335,22 +2335,31 @@ body.fullscreen-mode .android-gesture-bar {
 
 /* Link e Modal de Política de Privacidade (sobrepõe o modal de GPS sem alterá-lo) */
 .privacy-link-btn {
-  background: transparent;
-  border: none;
-  padding: 2px 0 12px;
-  color: #2563eb;
+  width: 100%;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  padding: 9px 12px;
+  margin-bottom: 12px;
+  color: #1d4ed8;
   font-family: inherit;
-  font-size: 0.78rem;
+  font-size: 0.77rem;
   font-weight: 700;
-  text-decoration: underline;
-  text-underline-offset: 2px;
   cursor: pointer;
-  display: inline-block;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   text-align: left;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.privacy-link-btn span {
+  flex: 1;
 }
 
 .privacy-link-btn:hover {
-  color: #1d4ed8;
+  background: #dbeafe;
+  border-color: #93c5fd;
 }
 
 #privacy-modal {
