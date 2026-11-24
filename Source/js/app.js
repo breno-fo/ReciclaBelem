@@ -42,6 +42,7 @@ const App = {
   userLocation: null, // { lat, lng, label }
   geoWatchId: null,
   mapClickMode: null, // null | 'setUserLoc' | 'pickAdminCoords'
+  pendingRoutePointId: null,
 
   async init() {
     const params = new URLSearchParams(window.location.search);
@@ -786,6 +787,7 @@ const App = {
   },
 
   denyLocationPermission() {
+    this.pendingRoutePointId = null;
     this.stopGpsTracking();
     this.updateGpsPill('denied');
     this.closeLocationModal();
@@ -882,12 +884,19 @@ const App = {
       this.userMarker.bindPopup('<strong>📍 Sua Localização Atual</strong>');
     }
 
-    if (this.map) {
+    const pendingRouteId = this.pendingRoutePointId;
+    this.pendingRoutePointId = null;
+
+    if (this.map && !pendingRouteId) {
       this.map.setView([lat, lng], 14);
     }
 
     this.renderMapAndPoints();
-    this.showToast(`📍 Localização ativa! Pontos ordenados por proximidade.`);
+    if (pendingRouteId) {
+      this.previewRouteOnMap(pendingRouteId);
+    } else {
+      this.showToast(`📍 Localização ativa! Pontos ordenados por proximidade.`);
+    }
   },
 
   centerOnUserOrPrompt() {
@@ -1478,6 +1487,7 @@ const App = {
     if (!pt || !this.map) return;
 
     if (!this.userLocation) {
+      this.pendingRoutePointId = pointId;
       this.showToast('Ative ou escolha sua posição no mapa para ver o trajeto.');
       this.openLocationModal();
       return;
