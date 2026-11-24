@@ -450,6 +450,12 @@ body.fullscreen-mode .android-statusbar {
   overflow: hidden;
   padding: 0;
   flex-shrink: 0;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.brand-logo:active {
+  transform: scale(0.92);
 }
 
 .mucura-logo-img {

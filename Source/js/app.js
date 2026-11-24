@@ -52,7 +52,8 @@ const App = {
       document.body.classList.add('embed-mode');
     }
 
-    // Aplica o modo de visualização imediatamente para nunca exibir Dashboard indevidamente
+    // Aplica a logo salva (mucura ou selo) e o modo de visualização imediatamente
+    this.applyAppLogo(localStorage.getItem('reciclaBelem_app_logo_v1') || 'mucura');
     const savedMode = localStorage.getItem('reciclaBelem_view_mode') || 'user';
     const initialMode = urlRole || savedMode;
     this.setAppRoleMode(initialMode, { skipSave: isEmbed });
@@ -142,6 +143,9 @@ const App = {
       if (e.key === 'reciclaBelem_battery_start_ts') {
         this.updateBatteryUI();
       }
+      if (e.key === 'reciclaBelem_app_logo_v1' && e.newValue) {
+        this.applyAppLogo(e.newValue);
+      }
     });
 
     // 8. Registra Service Worker para suporte Offline
@@ -190,6 +194,30 @@ const App = {
         this.maybePromptOfflineMap(500);
       }
     }, 650);
+  },
+
+  applyAppLogo(logoKey) {
+    const logos = {
+      mucura: './assets/icons/logo_mucura.png',
+      selo: './assets/icons/logo_selo.png'
+    };
+    const key = logos[logoKey] ? logoKey : 'mucura';
+    const src = logos[key];
+    this.currentAppLogo = key;
+
+    document.querySelectorAll('.mucura-logo-img').forEach((img) => {
+      img.src = src;
+    });
+    document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach((lnk) => {
+      lnk.href = src.replace('./', '');
+    });
+  },
+
+  toggleAppLogo() {
+    const next = this.currentAppLogo === 'selo' ? 'mucura' : 'selo';
+    localStorage.setItem('reciclaBelem_app_logo_v1', next);
+    this.applyAppLogo(next);
+    this.showToast(next === 'selo' ? 'Logo alterada: Selo Reciclagem' : 'Logo alterada: Mucura');
   },
 
   goToPhoneHome() {
