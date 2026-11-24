@@ -2333,6 +2333,69 @@ body.fullscreen-mode .android-gesture-bar {
   pointer-events: none;
 }
 
+/* Link e Modal de Política de Privacidade (sobrepõe o modal de GPS sem alterá-lo) */
+.privacy-link-btn {
+  background: transparent;
+  border: none;
+  padding: 2px 0 12px;
+  color: #2563eb;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  display: inline-block;
+  text-align: left;
+}
+
+.privacy-link-btn:hover {
+  color: #1d4ed8;
+}
+
+#privacy-modal {
+  z-index: 1250;
+}
+
+.privacy-header h2 {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--emerald-900);
+  margin-bottom: 4px;
+}
+
+.privacy-subtitle {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--emerald-700);
+  margin-bottom: 10px;
+}
+
+.privacy-doc-scroll {
+  max-height: 48vh;
+  overflow-y: auto;
+  background: var(--surface-bg, #f3f8f5);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.privacy-doc-scroll h4 {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--emerald-900);
+  margin-top: 4px;
+}
+
+.privacy-doc-scroll p {
+  font-size: 0.76rem;
+  line-height: 1.48;
+  color: var(--text-secondary);
+}
+
 /* Seção Sobre Nós (Equipe IEP & Missão) */
 .about-mission-card {
   background: #ffffff;

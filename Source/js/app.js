@@ -47,6 +47,10 @@ const App = {
     const params = new URLSearchParams(window.location.search);
     const isEmbed = params.get('embed') === '1';
     const urlRole = params.get('role'); // 'user' | 'admin' | 'split'
+    if (params.get('simulador') === '1') {
+      document.body.classList.add('simulator-mode');
+      document.getElementById('android-launcher').classList.add('active');
+    }
 
     if (isEmbed) {
       document.body.classList.add('embed-mode');
@@ -55,15 +59,16 @@ const App = {
     // Aplica a logo salva (mucura ou selo) e o modo de visualização imediatamente
     this.applyAppLogo(localStorage.getItem('reciclaBelem_app_logo_v1') || 'mucura');
     const savedMode = localStorage.getItem('reciclaBelem_view_mode') || 'user';
-    const initialMode = urlRole || savedMode;
-    this.setAppRoleMode(initialMode, { skipSave: isEmbed });
+    const savedSplitOnPhone = savedMode === 'split' && window.matchMedia('(max-width: 600px)').matches;
+    const initialMode = urlRole || (savedSplitOnPhone ? 'user' : savedMode);
+    this.setAppRoleMode(initialMode, { skipSave: isEmbed || savedSplitOnPhone || !!urlRole });
 
-    this.updateClock();
-    setInterval(() => this.updateClock(), 15000);
-
-    // Inicia bateria persistente (descarrega em 1 hora) e oscilação realista do 5G
-    this.startBatteryDrain();
-    this.startNetworkOscillation();
+    if (document.body.classList.contains('simulator-mode') || window.matchMedia('(min-width: 601px)').matches) {
+      this.updateClock();
+      setInterval(() => this.updateClock(), 15000);
+      this.startBatteryDrain();
+      this.startNetworkOscillation();
+    }
     this.initGpsPillState();
 
     // 1. Inicializa o Banco de Dados com proteção
@@ -102,6 +107,26 @@ const App = {
           this.renderSearchSuggestions();
         }
       });
+      searchInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' || event.key === 'Enter') {
+          this.closeSearchSuggestions();
+          searchInput.blur();
+          if (event.key === 'Enter') this.togglePointsDrawer(true);
+        }
+      });
+    }
+    // O Safari reduz a área visível quando o teclado cobre a parte inferior.
+    if (window.visualViewport) {
+      const fitKeyboard = () => {
+        const viewport = window.visualViewport;
+        const covered = Math.round(window.innerHeight - viewport.height);
+        if (viewport.scale === 1 && covered > 100) {
+          document.body.style.setProperty('--keyboard-height', Math.round(viewport.height) + 'px');
+        } else {
+          document.body.style.removeProperty('--keyboard-height');
+        }
+      };
+      window.visualViewport.addEventListener('resize', fitKeyboard);
     }
     document.addEventListener('click', (e) => {
       const wrap = document.getElementById('header-search-wrap');
@@ -154,22 +179,6 @@ const App = {
     }
     this.updateOfflineButtonState();
 
-    // 9. Se for embed Admin (Lado a Lado) ou app instalado (PWA standalone / APK Capacitor), abre direto no app
-    const isNativeOrStandalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      window.navigator.standalone === true ||
-      !!window.Capacitor;
-
-    if ((isEmbed && urlRole === 'admin') || isNativeOrStandalone) {
-      const launcher = document.getElementById('android-launcher');
-      if (launcher) launcher.classList.remove('active');
-      if (isNativeOrStandalone && !sessionStorage.getItem('recicla_loc_prompted')) {
-        setTimeout(() => {
-          this.openLocationModal();
-          sessionStorage.setItem('recicla_loc_prompted', 'true');
-        }, 450);
-      }
-    }
   },
 
   launchReciclaBelem() {
@@ -198,8 +207,8 @@ const App = {
 
   applyAppLogo(logoKey) {
     const logos = {
-      mucura: './assets/icons/logo_mucura.png',
-      selo: './assets/icons/logo_selo.png'
+      mucura: './assets/icons/mucura-192.png',
+      selo: './assets/icons/selo-192.png'
     };
     const key = logos[logoKey] ? logoKey : 'mucura';
     const src = logos[key];
@@ -419,23 +428,33 @@ const App = {
       zoomOutTitle: 'Diminuir zoom'
     }).addTo(this.map);
 
-    // Tiles OpenStreetMap.de (100% gratuitos, sem API key e funcionam tanto em localhost/https quanto em file://)
+    // Cartografia do pacote local de Belém, abaixo dos tiles de maior resolução.
+    const overviewPane = this.map.createPane('belemOverview');
+    overviewPane.style.zIndex = '180';
+    L.imageOverlay('./assets/map/belem-overview.webp', [
+      [-1.4939713066293199, -48.603515625],
+      [-1.1425024037061553, -48.33984375]
+    ], {
+      pane: 'belemOverview',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(this.map);
+
     const primaryTiles = L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors',
       maxZoom: 19
     }).addTo(this.map);
 
     let fallbackApplied = false;
     primaryTiles.on('tileerror', () => {
-      if (fallbackApplied) return;
+      if (fallbackApplied || navigator.onLine === false) return;
       fallbackApplied = true;
       L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles &copy; Esri &mdash; OpenStreetMap contributors',
+        attribution: 'Tiles &copy; Esri',
         maxZoom: 19
       }).addTo(this.map);
     });
 
     this.markersLayer = L.layerGroup().addTo(this.map);
+    this.map.on('zoomend', () => this.renderMapMarkers());
 
     // Eventos de arraste no mapa para o Pin Central Fixo (Selecionar Localização)
     this.map.on('movestart', () => {
@@ -467,19 +486,51 @@ const App = {
   resetMapView() {
     if (!this.map) return;
     const center = ReciclaDB.data.meta?.defaultCenter || { lat: -1.4558, lng: -48.4898, zoom: 13 };
-    this.map.flyTo([center.lat, center.lng], center.zoom, { duration: 0.7 });
+    this.map.setView([center.lat, center.lng], center.zoom);
   },
 
   /* ========================================================================
      GEOLOCALIZAÇÃO DO USUÁRIO & CÁLCULO DE DISTÂNCIA (HAVERSINE)
      ======================================================================== */
   openLocationModal() {
-    document.getElementById('location-modal').classList.add('open');
+    this.showUtilitySheet('location-modal');
   },
 
   closeLocationModal() {
-    document.getElementById('location-modal').classList.remove('open');
-    this.maybePromptOfflineMap(500);
+    this.hideUtilitySheet('location-modal');
+  },
+
+  showUtilitySheet(id) {
+    const modal = document.getElementById(id);
+    if (modal.classList.contains('open')) return;
+    this.utilitySheetTrigger = document.activeElement;
+    modal.classList.add('open');
+    const dialog = modal.querySelector('[role="dialog"]');
+    dialog.tabIndex = -1;
+    dialog.focus({ preventScroll: true });
+    modal.onkeydown = (event) => {
+      if (event.key === 'Escape') this.hideUtilitySheet(id);
+      if (event.key !== 'Tab') return;
+      const actions = [...dialog.querySelectorAll('button:not(:disabled)')].filter(btn => btn.offsetWidth);
+      const first = actions[0] || dialog;
+      const last = actions.at(-1) || dialog;
+      if (event.shiftKey && [dialog, first].includes(document.activeElement)) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+  },
+
+  hideUtilitySheet(id) {
+    const modal = document.getElementById(id);
+    if (!modal.classList.contains('open')) return;
+    modal.classList.remove('open');
+    modal.onkeydown = null;
+    this.utilitySheetTrigger?.focus({ preventScroll: true });
+    this.utilitySheetTrigger = null;
   },
 
   /* ========================================================================
@@ -488,16 +539,14 @@ const App = {
   isUsingMobileData() {
     const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
     if (conn) {
-      if (conn.type === 'cellular' || conn.saveData) {
+      if (conn.type === 'cellular') {
         return { isCellular: true, label: 'Dados Móveis (4G/5G)' };
       }
       if (conn.type === 'wifi' || conn.type === 'ethernet') {
-        return { isCellular: false, label: 'Wi-Fi' };
+        return { isCellular: false, label: conn.type === 'wifi' ? 'Wi-Fi' : 'cabo' };
       }
     }
-    // Fallback pelo indicador de rede do aparelho na barra de status
-    const netLabel = document.getElementById('network-label')?.textContent || '5G';
-    return { isCellular: true, label: `Dados Móveis (${netLabel})` };
+    return { isCellular: null };
   },
 
   maybePromptOfflineMap(delayMs = 600) {
@@ -514,6 +563,7 @@ const App = {
   },
 
   async openOfflineMapModal() {
+    this.showUtilitySheet('offline-map-modal');
     const net = this.isUsingMobileData();
     const alertEl = document.getElementById('offline-network-alert');
     const confirmBtn = document.getElementById('btn-confirm-offline-dl');
@@ -537,31 +587,20 @@ const App = {
     if (sizeEl) sizeEl.textContent = sizeLabel;
 
     if (alertEl) {
-      if (net.isCellular) {
-        alertEl.className = 'offline-network-alert cellular';
-        alertEl.innerHTML = `⚠️ <strong>Você está usando ${net.label}.</strong><br/>Deseja baixar o mapa de Belém, Icoaraci e Outeiro usando seus dados móveis? (${sizeLabel})`;
-      } else {
-        alertEl.className = 'offline-network-alert wifi';
-        alertEl.innerHTML = `📶 <strong>Conectado via ${net.label}.</strong><br/>Sem consumo da sua franquia de dados móveis.`;
-      }
+      alertEl.hidden = net.isCellular === null;
+      alertEl.className = 'offline-network-alert ' + (net.isCellular ? 'cellular' : 'wifi');
+      alertEl.textContent = net.isCellular ? 'O download usará seus dados móveis.' : 'Conexão via ' + net.label + '.';
     }
 
     if (confirmBtn) {
       const alreadyDone = !!localStorage.getItem('reciclaBelem_offline_map_v1');
-      if (alreadyDone) {
-        confirmBtn.textContent = `🔄 Atualizar Mapa Offline (${sizeLabel})`;
-      } else {
-        confirmBtn.textContent = net.isCellular
-          ? `📶 Sim, baixar com Dados Móveis (${sizeLabel})`
-          : `⬇️ Baixar Mapa Offline (${sizeLabel})`;
-      }
+      confirmBtn.textContent = (alreadyDone ? 'Atualizar mapa' : 'Baixar mapa') + ' (' + sizeLabel + ')';
     }
 
-    document.getElementById('offline-map-modal').classList.add('open');
   },
 
   dismissOfflineModal() {
-    document.getElementById('offline-map-modal').classList.remove('open');
+    this.hideUtilitySheet('offline-map-modal');
   },
 
   updateOfflineButtonState() {
@@ -599,18 +638,7 @@ const App = {
     }
 
     try {
-      const cache = await caches.open('recicla-belem-offline-v9');
-
-      // 1. Garante os arquivos principais do app no cache offline
-      const shellUrls = ['./', './index.html', './manifest.json', './css/styles.css', './js/db.js', './js/icons.js', './js/app.js', './data/database.json'];
-      await Promise.all(
-        shellUrls.map(async (u) => {
-          try {
-            const r = await fetch(u);
-            if (r && r.ok) await cache.put(u, r);
-          } catch (e) {}
-        })
-      );
+      const cache = await caches.open('recicla-belem-map-tiles');
 
       // 2. Baixa o pacote binario unico com os 501 tiles de Belem, Icoaraci e Outeiro (zoom 12-15)
       const packRes = await fetch('./data/belem-map-pack.bin');
@@ -708,7 +736,7 @@ const App = {
       txt.textContent = 'GPS ativo';
     } else if (state === 'denied') {
       btn.classList.add('loc-denied');
-      txt.textContent = 'GPS não ativo';
+      txt.textContent = 'GPS inativo';
     } else {
       txt.textContent = 'Ativar GPS';
     }
@@ -754,7 +782,7 @@ const App = {
     this.updateGpsPill('denied');
     this.closeLocationModal();
     this.renderMapAndPoints();
-    this.showToast('GPS não ativo. Captura de localização interrompida.');
+    this.showToast('Localização desativada.');
   },
 
   requestBrowserGeolocation() {
@@ -847,7 +875,7 @@ const App = {
     }
 
     if (this.map) {
-      this.map.flyTo([lat, lng], 14, { duration: 0.8 });
+      this.map.setView([lat, lng], 14);
     }
 
     this.renderMapAndPoints();
@@ -856,7 +884,7 @@ const App = {
 
   centerOnUserOrPrompt() {
     if (this.userLocation && this.map) {
-      this.map.flyTo([this.userLocation.lat, this.userLocation.lng], 15, { duration: 0.7 });
+      this.map.setView([this.userLocation.lat, this.userLocation.lng], 15);
       if (this.userMarker) this.userMarker.openPopup();
     } else {
       this.openLocationModal();
@@ -900,10 +928,13 @@ const App = {
             : this.activeMaterialFilters.includes(c.slug);
         return `
       <button
+        type="button"
         class="filter-chip ${isActive ? 'active' : ''}"
+        data-material="${c.slug}"
+        aria-pressed="${isActive}"
         onclick="App.setMaterialFilter('${c.slug}')"
       >
-        <span class="filter-icon">${c.slug === 'todos' ? ReciclaIcons.recycleSVG(26) : ReciclaIcons.getMaterialIcon(c.slug, 26)}</span>
+        <span class="filter-icon" aria-hidden="true">${c.slug === 'todos' ? ReciclaIcons.recycleSVG(26) : ReciclaIcons.getMaterialIcon(c.slug, 26)}</span>
         <span>${c.label}</span>
       </button>
     `;
@@ -922,12 +953,19 @@ const App = {
         this.activeMaterialFilters.splice(idx, 1);
       }
     }
-    this.renderMaterialFilterChips();
+    document.querySelectorAll('#material-filters [data-material]').forEach((button) => {
+      const material = button.dataset.material;
+      const isActive = material === 'todos' ? !this.activeMaterialFilters.length : this.activeMaterialFilters.includes(material);
+      button.classList.toggle('active', isActive);
+      button.setAttribute('aria-pressed', String(isActive));
+    });
     this.renderMapAndPoints();
   },
 
   handleSearchInput(rawVal) {
     this.searchQuery = rawVal.trim();
+    this.remotePlaces = [];
+    clearTimeout(this.searchDebounceTimer);
     document.getElementById('search-clear-btn').style.display = this.searchQuery ? 'inline-flex' : 'none';
 
     if (this.currentTab !== 'mapa') {
@@ -945,10 +983,10 @@ const App = {
     this.renderMapAndPoints();
 
     // Busca online complementar no OpenStreetMap (Nominatim) para qualquer rua/lugar de Belém
-    clearTimeout(this.searchDebounceTimer);
     if (this.searchQuery.length >= 3) {
+      const query = this.searchQuery;
       this.searchDebounceTimer = setTimeout(() => {
-        this.fetchNominatimPlaces(this.searchQuery);
+        this.fetchNominatimPlaces(query);
       }, 350);
     }
   },
@@ -959,6 +997,7 @@ const App = {
       const res = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' } });
       if (!res.ok) return;
       const results = await res.json();
+      if (query !== this.searchQuery || !Array.isArray(results)) return;
       this.remotePlaces = results.map((r) => {
         const parts = r.display_name.split(',').map((s) => s.trim());
         return {
@@ -968,7 +1007,7 @@ const App = {
           lng: parseFloat(r.lon)
         };
       });
-      if (this.searchQuery.trim().length > 0) {
+      if (this.currentTab === 'mapa' && document.activeElement === document.getElementById('search-input')) {
         this.renderSearchSuggestions();
       }
     } catch (e) {
@@ -993,7 +1032,7 @@ const App = {
       return;
     }
 
-    const points = ReciclaDB.data?.points || [];
+    const points = this.getPointsForMaterials();
 
     // 1. Lugares que combinam com a busca (catálogo local + Nominatim)
     const localPlaces = BELEM_PLACES.filter(
@@ -1009,15 +1048,7 @@ const App = {
     const topPlaces = mergedPlaces.slice(0, 4);
 
     // 2. Pontos de reciclagem que combinam diretamente com o texto
-    let matchedPoints = points.filter((pt) => {
-      const fullName = ReciclaIcons.formatPointName(pt.name);
-      return (
-        this.normalizeText(fullName).includes(qNorm) ||
-        this.normalizeText(pt.neighborhood).includes(qNorm) ||
-        this.normalizeText(pt.address).includes(qNorm) ||
-        this.normalizeText(pt.description).includes(qNorm)
-      );
-    });
+    const matchedPoints = points.filter((point) => this.pointMatchesSearch(point, qNorm));
 
     // Se encontrou um lugar (ex: "Praça da República"), sugere também os pontos mais próximos dele!
     if (topPlaces.length > 0) {
@@ -1053,7 +1084,7 @@ const App = {
     let html = '';
 
     if (topPoints.length > 0) {
-      html += `<div class="suggestion-group-title">♻️ Pontos de Reciclagem (Sugestões)</div>`;
+      html += `<div class="suggestion-group-title">Ecopontos</div>`;
       html += topPoints
         .map((pt) => {
           const displayName = ReciclaIcons.formatPointName(pt.name);
@@ -1064,7 +1095,6 @@ const App = {
               <div class="suggestion-title">${this.escapeHtml(displayName)}</div>
               <div class="suggestion-sub">${this.escapeHtml(pt.neighborhood)} • ${this.escapeHtml(pt.address)}</div>
             </div>
-            <span class="suggestion-tag">♻️ Ponto</span>
           </button>
         `;
         })
@@ -1072,7 +1102,7 @@ const App = {
     }
 
     if (topPlaces.length > 0) {
-      html += `<div class="suggestion-group-title">📍 Lugares & Endereços no Mapa</div>`;
+      html += `<div class="suggestion-group-title">Lugares e endereços</div>`;
       html += topPlaces
         .map((pl, idx) => {
           const safeJson = this.escapeHtml(JSON.stringify(pl));
@@ -1083,7 +1113,6 @@ const App = {
               <div class="suggestion-title">${this.escapeHtml(pl.name)}</div>
               <div class="suggestion-sub">${this.escapeHtml(pl.area)}</div>
             </div>
-            <span class="suggestion-tag">📍 Local</span>
           </button>
         `;
         })
@@ -1136,7 +1165,7 @@ const App = {
       this.searchedPlaceMarker
         .bindPopup(`<strong>📍 ${this.escapeHtml(place.name)}</strong><br/><small>${this.escapeHtml(place.area)}</small>`)
         .openPopup();
-      this.map.flyTo([place.lat, place.lng], 15, { duration: 0.75 });
+      this.map.setView([place.lat, place.lng], 15);
     }
 
     this.renderMapAndPoints();
@@ -1158,26 +1187,21 @@ const App = {
     this.renderMapAndPoints();
   },
 
-  getFilteredPoints() {
+  getPointsForMaterials() {
     const points = ReciclaDB.data?.points || [];
+    if (!this.activeMaterialFilters.length) return points;
+    return points.filter(point => Array.isArray(point.materials) &&
+      this.activeMaterialFilters.every(material => point.materials.includes(material)));
+  },
+
+  pointMatchesSearch(point, query) {
+    return !query || [ReciclaIcons.formatPointName(point.name), point.neighborhood, point.address, point.description]
+      .some(value => this.normalizeText(value).includes(query));
+  },
+
+  getFilteredPoints() {
     const q = this.normalizeText(this.searchQuery);
-
-    let filtered = points.filter((pt) => {
-      const matchesMaterial =
-        this.activeMaterialFilters.length === 0 ||
-        (Array.isArray(pt.materials) &&
-          this.activeMaterialFilters.every((m) => pt.materials.includes(m)));
-
-      const fullName = ReciclaIcons.formatPointName(pt.name);
-      const matchesQuery =
-        !q ||
-        this.normalizeText(fullName).includes(q) ||
-        this.normalizeText(pt.neighborhood).includes(q) ||
-        this.normalizeText(pt.address).includes(q) ||
-        this.normalizeText(pt.description).includes(q);
-
-      return matchesMaterial && matchesQuery;
-    });
+    let filtered = this.getPointsForMaterials().filter((point) => this.pointMatchesSearch(point, q));
 
     // Referência para cálculo de distância: Lugar pesquisado (se houver) ou GPS do usuário
     const refCoords = this.searchedPlace || this.userLocation;
@@ -1215,22 +1239,68 @@ const App = {
   renderMapMarkers() {
     if (!this.map || !this.markersLayer) return;
     this.markersLayer.clearLayers();
+    this.map.closePopup();
+    const groups = [];
+    for (const point of this.getFilteredPoints()) {
+      const lat = Number(point.lat), lng = Number(point.lng);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+      const latLng = L.latLng(lat, lng);
+      const position = this.map.project(latLng);
+      const selected = point.id === this.selectedPointId;
+      const nearby = !selected && groups.find(group => !group.selected && group.center.distanceTo(position) < 43);
+      if (nearby) {
+        const count = nearby.points.length;
+        nearby.center = nearby.center.multiplyBy(count).add(position).divideBy(count + 1);
+        nearby.points.push(point);
+      } else {
+        groups.push({ center: position, points: [point], selected });
+      }
+    }
 
-    const filtered = this.getFilteredPoints();
-    filtered.forEach((pt) => {
-      const isSelected = this.selectedPointId === pt.id;
+    groups.forEach(({ center, points, selected }) => {
+      const group = points.length > 1;
+      const name = group ? points.length + ' ecopontos, ' + (this.map.getZoom() < this.map.getMaxZoom() ? 'ampliar' : 'ver lista')
+        : ReciclaIcons.formatPointName(points[0].name);
       const icon = L.divIcon({
-        className: '',
-        html: ReciclaIcons.createMapPinHTML(pt, isSelected),
-        iconSize: [44, 34],
-        iconAnchor: [22, 30]
+        className: 'ecopoint-marker',
+        html: group ? '<span class="map-cluster">' + points.length + '</span>' : ReciclaIcons.createMapPinHTML(selected),
+        iconSize: [48, 44],
+        iconAnchor: [24, group ? 22 : 41]
       });
-
-      const marker = L.marker([Number(pt.lat), Number(pt.lng)], { icon }).addTo(this.markersLayer);
-      marker.on('click', () => {
-        this.openPointDetails(pt.id);
-      });
+      const marker = L.marker(this.map.unproject(center), {
+        icon, title: name, zIndexOffset: selected ? 300 : 0
+      }).addTo(this.markersLayer);
+      const element = marker.getElement();
+      element.setAttribute('aria-label', name);
+      if (group) {
+        marker.on('click', () => this.openMapGroup(points, marker));
+      } else {
+        element.dataset.pointId = points[0].id;
+        marker.on('click', () => this.openPointDetails(points[0].id));
+      }
     });
+  },
+
+  openMapGroup(points, marker) {
+    const zoom = this.map.getZoom();
+    if (zoom < this.map.getMaxZoom()) {
+      const bounds = L.latLngBounds(points.map(point => [Number(point.lat), Number(point.lng)]));
+      const targetZoom = this.map.getBoundsZoom(bounds, false, L.point(96, 96));
+      this.map.setView(bounds.getCenter(), Math.max(zoom + 1, Math.min(zoom + 3, targetZoom)));
+      return;
+    }
+    // Pontos cadastrados na mesma coordenada ainda podem ser escolhidos no zoom máximo.
+    const list = document.createElement('div');
+    list.className = 'map-group-list';
+    points.forEach(point => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = ReciclaIcons.formatPointName(point.name);
+      button.onclick = () => this.openPointDetails(point.id);
+      list.append(button);
+    });
+    L.popup({ maxWidth: 220 }).setLatLng(marker.getLatLng()).setContent(list).openOn(this.map);
+    list.querySelector('button').focus({ preventScroll: true });
   },
 
   renderPointsList() {
@@ -1239,22 +1309,17 @@ const App = {
     if (!container) return;
 
     const filtered = this.getFilteredPoints();
-    if (countLabel) {
-      if (this.searchedPlace) {
-        countLabel.textContent = `${filtered.length} pontos próximos a ${this.searchedPlace.name}`;
-      } else {
-        countLabel.textContent =
-          filtered.length === 1
-            ? '1 ponto de reciclagem encontrado'
-            : `${filtered.length} pontos de reciclagem encontrados`;
-      }
-    }
+    if (countLabel) countLabel.textContent = filtered.length;
+    const defaultSort = document.querySelector('#sort-select option[value="distance"]');
+    if (defaultSort) defaultSort.textContent = this.searchedPlace || this.userLocation ? 'Proximidade' : 'Padrão';
+    const placeLabel = document.getElementById('drawer-place');
+    if (placeLabel) placeLabel.textContent = this.searchedPlace ? `Próximos a ${this.searchedPlace.name}` : '';
 
     if (filtered.length === 0) {
       container.innerHTML = `
-        <div style="background:#fff;border:1px dashed var(--border-strong);border-radius:16px;padding:24px;text-align:center;">
-          <p style="font-size:0.9rem;font-weight:700;color:var(--text-main);margin-bottom:4px;">Nenhum ponto de reciclagem encontrado</p>
-          <p style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:12px;">Tente limpar o filtro de material ou buscar por outro bairro ou praça.</p>
+        <div class="point-list-empty">
+          <h3>Nenhum ecoponto encontrado</h3>
+          <p>Busque outro bairro ou altere os materiais selecionados.</p>
           <button class="btn btn-secondary" onclick="App.setMaterialFilter('todos');App.clearSearch();">Mostrar todos os pontos</button>
         </div>
       `;
@@ -1266,8 +1331,8 @@ const App = {
         const displayName = ReciclaIcons.formatPointName(pt.name);
         const distBadge =
           pt.distanceKm !== null
-            ? `<span class="distance-badge">📍 ${pt.distanceKm < 1 ? `${Math.round(pt.distanceKm * 1000)} m` : `${pt.distanceKm.toFixed(1)} km`}</span>`
-            : `<span class="distance-badge">${this.escapeHtml(pt.neighborhood)}</span>`;
+            ? `<span class="distance-badge">${pt.distanceKm < 1 ? `${Math.round(pt.distanceKm * 1000)} m` : `${pt.distanceKm.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} km`}</span>`
+            : '';
 
         const badges = (pt.materials || [])
           .map((m) => ReciclaIcons.getMaterialBadge(m))
@@ -1276,35 +1341,20 @@ const App = {
         const gmapsUrl = this.buildGoogleMapsNavUrl(pt);
 
         return `
-        <article class="point-card ${this.selectedPointId === pt.id ? 'selected' : ''}" onclick="App.openPointDetails('${pt.id}')">
+        <article class="point-card ${this.selectedPointId === pt.id ? 'selected' : ''}" data-point-id="${this.escapeHtml(pt.id)}">
           <div class="point-card-top">
-            <div style="display:flex;align-items:flex-start;gap:8px;">
-              <span style="width:28px;height:28px;border-radius:8px;background:var(--emerald-100);color:var(--emerald-800);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;" title="Ponto de Reciclagem">
-                ${ReciclaIcons.recycleSVG(16)}
-              </span>
-              <div>
-                <h3 class="point-title">${this.escapeHtml(displayName)}</h3>
-                <div class="point-neighborhood">📌 ${this.escapeHtml(pt.neighborhood)}</div>
-              </div>
-            </div>
+            <span class="point-neighborhood">${ReciclaIcons.placePinSVG(14)} ${this.escapeHtml(pt.neighborhood)}</span>
             ${distBadge}
           </div>
-
+          <h3 class="point-title"><button type="button" class="point-open" onclick="App.openPointDetails(this.closest('article').dataset.pointId)">${this.escapeHtml(displayName)}</button></h3>
           <p class="point-address">${this.escapeHtml(pt.address)}</p>
-
-          <div class="point-meta-row">
-            <span>🕒 ${this.escapeHtml(pt.hours || 'Horário comercial')}</span>
-            ${pt.phone ? `<span>📞 ${this.escapeHtml(pt.phone)}</span>` : ''}
-          </div>
-
           <div class="materials-wrap">${badges}</div>
-
-          <div class="point-actions" onclick="event.stopPropagation();">
-            <button class="btn btn-secondary" onclick="App.previewRouteOnMap('${pt.id}')">
-              Ver no Mapa
+          <div class="point-actions">
+            <button type="button" class="btn btn-secondary" onclick="App.previewRouteOnMap(this.closest('article').dataset.pointId)">
+              Ver trajeto
             </button>
             <a class="btn btn-primary" href="${gmapsUrl}" target="_blank" rel="noopener noreferrer">
-              Navegar (Google Maps)
+              Como chegar <span aria-hidden="true">↗</span>
             </a>
           </div>
         </article>
@@ -1336,13 +1386,14 @@ const App = {
 
     const displayName = ReciclaIcons.formatPointName(pt.name);
     this.selectedPointId = pointId;
+    this.pointDetailTrigger = document.activeElement;
     this.renderMapMarkers();
 
     if (this.map) {
-      this.map.flyTo([Number(pt.lat), Number(pt.lng)], 15, { duration: 0.6 });
+      this.map.setView([Number(pt.lat), Number(pt.lng)], Math.max(15, this.map.getZoom()), { animate: false });
     }
 
-    let distText = 'Ative o GPS para calcular a distância';
+    let distText = '';
     if (this.userLocation) {
       const d = this.calculateDistanceKm(
         this.userLocation.lat,
@@ -1350,7 +1401,7 @@ const App = {
         Number(pt.lat),
         Number(pt.lng)
       );
-      distText = d < 1 ? `A ${Math.round(d * 1000)} metros de você` : `A ${d.toFixed(2)} km de você`;
+      distText = d < 1 ? `${Math.round(d * 1000)} m de você` : `${d.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} km de você`;
     }
 
     const badges = (pt.materials || []).map((m) => ReciclaIcons.getMaterialBadge(m)).join('');
@@ -1358,52 +1409,60 @@ const App = {
     const gmapsReviewUrl = this.buildGoogleMapsReviewUrl(pt);
 
     const content = document.getElementById('point-detail-content');
+    content.dataset.pointId = pointId;
     content.innerHTML = `
       <div class="sheet-handle"></div>
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px;">
-        <div>
-          <span class="distance-badge" style="display:inline-flex;align-items:center;gap:5px;margin-bottom:6px;">
-            ${ReciclaIcons.recycleSVG(13)} ${distText}
-          </span>
-          <h3 style="font-size:1.08rem;font-weight:800;color:var(--text-main);">${this.escapeHtml(displayName)}</h3>
-          <p style="font-size:0.8rem;font-weight:600;color:var(--emerald-700);">${this.escapeHtml(pt.neighborhood)} • Belém - PA</p>
-        </div>
-        <button class="icon-btn" onclick="App.closePointModal()">✕</button>
+      <div class="point-detail-top">
+        <span class="point-neighborhood">${ReciclaIcons.placePinSVG(16)} ${this.escapeHtml(pt.neighborhood)} · Belém</span>
+        <button type="button" class="point-dismiss" aria-label="Fechar detalhe do ecoponto" onclick="App.closePointModal()">×</button>
       </div>
-
-      <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:10px;line-height:1.45;">
-        ${this.escapeHtml(pt.description || 'Ponto de entrega voluntária de materiais recicláveis.')}
-      </p>
-
-      <div style="background:var(--surface-bg);border-radius:12px;padding:11px;margin-bottom:12px;font-size:0.79rem;display:flex;flex-direction:column;gap:5px;">
-        <div><strong>Endereço:</strong> ${this.escapeHtml(pt.address)}</div>
-        <div><strong>Funcionamento:</strong> ${this.escapeHtml(pt.hours || 'Consulte local')}</div>
-        ${pt.phone ? `<div><strong>Contato:</strong> ${this.escapeHtml(pt.phone)}</div>` : ''}
-      </div>
-
-      <div style="margin-bottom:14px;">
-        <div style="font-size:0.75rem;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">MATERIAIS ACEITOS NESTE PONTO:</div>
-        <div class="materials-wrap">${badges}</div>
-      </div>
-
-      <div style="display:flex;flex-direction:column;gap:8px;">
-        <a class="btn btn-primary" href="${gmapsUrl}" target="_blank" rel="noopener noreferrer" style="padding:12px;font-size:0.86rem;">
-          Iniciar Modo Navegação no Google Maps
+      <h2 id="point-detail-title">${this.escapeHtml(displayName)}</h2>
+      ${distText ? `<span class="distance-badge">${distText}</span>` : ''}
+      <h3 class="point-section-title">Materiais aceitos</h3>
+      <div class="materials-wrap">${badges || 'Consulte o local'}</div>
+      <dl class="point-facts">
+        <div><dt>Endereço</dt><dd>${this.escapeHtml(pt.address)}</dd></div>
+        <div><dt>Horário</dt><dd>${this.escapeHtml(pt.hours || 'Consulte o local')}</dd></div>
+        ${pt.phone ? `<div><dt>Contato</dt><dd>${this.escapeHtml(pt.phone)}</dd></div>` : ''}
+      </dl>
+      ${pt.description ? `<p class="point-description">${this.escapeHtml(pt.description)}</p>` : ''}
+      <div class="point-detail-actions">
+        <a class="btn btn-primary" href="${gmapsUrl}" target="_blank" rel="noopener noreferrer">
+          Como chegar pelo Google Maps <span aria-hidden="true">↗</span>
         </a>
-        <button class="btn btn-secondary" onclick="App.closePointModal();App.previewRouteOnMap('${pt.id}');">
-          Ver Trajeto no Mapa (2D)
+        <button type="button" class="btn btn-secondary" onclick="App.closePointModal();App.previewRouteOnMap(this.closest('[role=dialog]').dataset.pointId)">
+          Ver trajeto no mapa
         </button>
-        <a class="btn btn-secondary" href="${gmapsReviewUrl}" target="_blank" rel="noopener noreferrer" style="padding:11px;font-size:0.84rem;">
+        <a class="point-review" href="${gmapsReviewUrl}" target="_blank" rel="noopener noreferrer">
           Avaliar no Google Maps
         </a>
       </div>
     `;
 
     document.getElementById('point-detail-modal').classList.add('open');
+    content.scrollTop = 0;
+    content.querySelector('.point-dismiss').focus({ preventScroll: true });
+    content.onkeydown = (event) => {
+      if (event.key === 'Escape') this.closePointModal();
+      if (event.key !== 'Tab') return;
+      const controls = content.querySelectorAll('button, a[href]');
+      const first = controls[0], last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
   },
 
   closePointModal() {
     document.getElementById('point-detail-modal').classList.remove('open');
+    const trigger = this.pointDetailTrigger?.isConnected ? this.pointDetailTrigger :
+      document.querySelector(`.leaflet-marker-icon[data-point-id="${CSS.escape(String(this.selectedPointId))}"]`) ||
+      document.querySelector('.drawer-toggle');
+    trigger?.focus({ preventScroll: true });
   },
 
   async previewRouteOnMap(pointId) {
@@ -1503,41 +1562,33 @@ const App = {
     }
 
     if (guideContainer) {
-      guideContainer.innerHTML = guide
-        .map(
-          (g) => `
-        <article class="guide-card">
-          <div class="guide-card-header">
-            <div class="guide-title-group">
-              ${ReciclaIcons.getMaterialIcon(g.slug, 38)}
-              <h4 style="font-size:0.96rem;font-weight:800;">${this.escapeHtml(g.name)}</h4>
-            </div>
-            <span class="guide-color-pill" style="background:${g.bgSoft || '#ECFDF5'};color:${g.colorHex || '#059669'};border:1px solid ${g.colorHex || '#10B981'}40;">
-              ${this.escapeHtml(g.binColorName)}
-            </span>
-          </div>
-
-          <div style="font-size:0.78rem;font-weight:700;color:var(--emerald-800);margin-bottom:8px;">
-            📍 Onde jogar: ${this.escapeHtml(g.whereToThrow)}
-          </div>
-
-          <div class="guide-box can-box">
-            <strong>✅ O que PODE descartar</strong>
-            ${this.escapeHtml(g.canRecycle)}
-          </div>
-
-          <div class="guide-box cannot-box">
-            <strong>❌ O que NÃO pode descartar</strong>
-            ${this.escapeHtml(g.cannotRecycle)}
-          </div>
-
-          <div class="guide-tip">
-            <strong>💡 Como preparar antes de jogar:</strong> ${this.escapeHtml(g.prepTip)}
-          </div>
-        </article>
-      `
-        )
-        .join('');
+      const expanded = new Set(Array.from(
+        guideContainer.querySelectorAll('details[open]'), (item) => item.dataset.material
+      ));
+      guideContainer.innerHTML = guide.map((g) => {
+        const key = String(g.id || g.slug || g.name);
+        const color = /^#[a-f0-9]{6}$/i.test(g.colorHex) ? g.colorHex : '#087858';
+        const tint = /^#[a-f0-9]{6}$/i.test(g.bgSoft) ? g.bgSoft : '#eaf4ed';
+        return `
+          <details class="material-entry" data-material="${this.escapeHtml(key)}" ${expanded.has(key) ? 'open' : ''}
+              style="--material-color:${color}; --material-tint:${tint}">
+            <summary>
+              <span class="material-tile">${ReciclaIcons.getMaterialIcon(g.slug, 40)}</span>
+              <span class="material-caption">
+                <strong>${this.escapeHtml(g.name)}</strong>
+                <span>${this.escapeHtml(g.binColorName)}</span>
+              </span>
+              <span class="material-chevron" aria-hidden="true"></span>
+            </summary>
+            <dl class="material-instructions">
+              <dt>Onde entregar</dt><dd>${this.escapeHtml(g.whereToThrow)}</dd>
+              <dt>Pode descartar</dt><dd>${this.escapeHtml(g.canRecycle)}</dd>
+              <dt>Não pode descartar</dt><dd>${this.escapeHtml(g.cannotRecycle)}</dd>
+              <dt>Como preparar</dt><dd>${this.escapeHtml(g.prepTip)}</dd>
+            </dl>
+          </details>
+        `;
+      }).join('') || '<p class="citizen-empty">O guia ainda não tem materiais cadastrados.</p>';
     }
   },
 
@@ -1550,7 +1601,7 @@ const App = {
 
     const newsList = ReciclaDB.data?.news || [];
     if (newsList.length === 0) {
-      container.innerHTML = `<p style="font-size:0.82rem;color:var(--text-muted);">Nenhuma notícia cadastrada.</p>`;
+      container.innerHTML = `<p class="citizen-empty">Nenhuma notícia cadastrada.</p>`;
       return;
     }
 
@@ -1558,28 +1609,29 @@ const App = {
     const sorted = [...newsList].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
 
     container.innerHTML = sorted
-      .map((n) => {
-        const coverHtml = n.imageUrl
-          ? `<img class="news-cover-img" src="${this.escapeHtml(n.imageUrl)}" alt="${this.escapeHtml(n.title)}" loading="lazy" onerror="this.style.display='none'" />`
+      .map((n, index) => {
+        const cover = n.imageUrl
+          ? `<img class="local-story-cover" src="${this.escapeHtml(n.imageUrl)}" alt="" loading="lazy" onerror="this.hidden=true" />`
           : '';
-        const sourceLinkHtml = n.sourceUrl
-          ? `<a class="news-source-link" href="${this.escapeHtml(n.sourceUrl)}" target="_blank" rel="noopener noreferrer">🔗 Ler matéria original</a>`
+        const source = this.escapeHtml(n.author || 'Equipe ReciclaBelém');
+        const sourceLink = n.sourceUrl
+          ? `<a href="${this.escapeHtml(n.sourceUrl)}" target="_blank" rel="noopener noreferrer">Ler na fonte <span aria-hidden="true">↗</span></a>`
           : '';
         return `
-      <article class="news-card ${n.featured ? 'featured' : ''}">
-        ${coverHtml}
-        <div class="news-meta">
-          <span class="news-cat">${n.featured ? '⭐ Destaque • ' : ''}${this.escapeHtml(n.category)}</span>
-          <span class="news-date">${this.escapeHtml(n.date)}</span>
-        </div>
-        <h3 class="news-title">${this.escapeHtml(n.title)}</h3>
-        <p class="news-summary">${this.escapeHtml(n.summary)}</p>
-        <div class="news-footer-row">
-          <div class="news-author">Fonte: ${this.escapeHtml(n.author || 'Equipe ReciclaBelém')}</div>
-          ${sourceLinkHtml}
-        </div>
-      </article>
-    `;
+          <article class="local-story ${index === 0 ? 'lead-story' : ''}">
+            ${cover}
+            <div class="local-story-body">
+              <div class="local-story-meta">
+                ${n.featured ? '<strong>Destaque</strong>' : ''}
+                <span>${this.escapeHtml(n.category)}</span>
+                <span>${this.escapeHtml(n.date)}</span>
+              </div>
+              <h3>${this.escapeHtml(n.title)}</h3>
+              <p>${this.escapeHtml(n.summary)}</p>
+              <footer><span>${source}</span>${sourceLink}</footer>
+            </div>
+          </article>
+        `;
       })
       .join('');
   },
@@ -1702,6 +1754,7 @@ const App = {
     if (!picker) return;
     const isOpen = typeof forceState === 'boolean' ? forceState : !picker.classList.contains('open');
     picker.classList.toggle('open', isOpen);
+    document.getElementById('pt-hours').setAttribute('aria-expanded', String(isOpen));
   },
 
   toggleWeekday(day) {
@@ -2373,6 +2426,7 @@ const App = {
     if (!drawer) return;
     const shouldExpand = typeof forceState === 'boolean' ? forceState : !drawer.classList.contains('expanded');
     drawer.classList.toggle('expanded', shouldExpand);
+    drawer.querySelector('.drawer-toggle')?.setAttribute('aria-expanded', String(shouldExpand));
   },
 
   initPointsDrawerDrag() {
@@ -2416,6 +2470,8 @@ const App = {
 
   switchTab(tabName) {
     this.currentTab = tabName;
+    document.body.dataset.tab = tabName;
+    this.closeSearchSuggestions();
     document.body.classList.toggle('tab-admin-active', tabName === 'admin');
 
     document.querySelectorAll('.tab-view').forEach((view) => {
@@ -2423,7 +2479,10 @@ const App = {
     });
 
     document.querySelectorAll('.nav-item').forEach((btn) => {
-      btn.classList.toggle('active', btn.dataset.tab === tabName);
+      const selected = btn.dataset.tab === tabName;
+      btn.classList.toggle('active', selected);
+      if (selected) btn.setAttribute('aria-current', 'page');
+      else btn.removeAttribute('aria-current');
     });
 
     if (tabName === 'mapa' && this.map) {
