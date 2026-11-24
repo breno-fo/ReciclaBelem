@@ -2,7 +2,7 @@
  * ReciclaBelém - Service Worker para Modo Offline (PWA + Mapa em Cache)
  */
 
-const CACHE_NAME = 'recicla-belem-offline-v9';
+const CACHE_NAME = 'recicla-belem-offline-v11';
 const APP_SHELL = [
   './',
   './index.html',
@@ -13,6 +13,8 @@ const APP_SHELL = [
   './js/app.js',
   './data/database.json',
   './assets/wallpaper.jpg',
+  './assets/icons/logo_mucura.png',
+  './assets/brand-wordmark.svg',
   './assets/materials/compact/plastico.png',
   './assets/materials/compact/papel.png',
   './assets/materials/compact/vidro.png',
