@@ -1339,9 +1339,9 @@ const App = {
       </p>
 
       <div style="background:var(--surface-bg);border-radius:12px;padding:11px;margin-bottom:12px;font-size:0.79rem;display:flex;flex-direction:column;gap:5px;">
-        <div><strong>📍 Endereço:</strong> ${this.escapeHtml(pt.address)}</div>
-        <div><strong>🕒 Funcionamento:</strong> ${this.escapeHtml(pt.hours || 'Consulte local')}</div>
-        ${pt.phone ? `<div><strong>📞 Contato:</strong> ${this.escapeHtml(pt.phone)}</div>` : ''}
+        <div><strong>Endereço:</strong> ${this.escapeHtml(pt.address)}</div>
+        <div><strong>Funcionamento:</strong> ${this.escapeHtml(pt.hours || 'Consulte local')}</div>
+        ${pt.phone ? `<div><strong>Contato:</strong> ${this.escapeHtml(pt.phone)}</div>` : ''}
       </div>
 
       <div style="margin-bottom:14px;">
@@ -1351,10 +1351,10 @@ const App = {
 
       <div style="display:flex;flex-direction:column;gap:8px;">
         <a class="btn btn-primary" href="${gmapsUrl}" target="_blank" rel="noopener noreferrer" style="padding:12px;font-size:0.86rem;">
-          🧭 Iniciar Modo Navegação no Google Maps
+          Iniciar Modo Navegação no Google Maps
         </a>
         <button class="btn btn-secondary" onclick="App.closePointModal();App.previewRouteOnMap('${pt.id}');">
-          🗺️ Traçar Linha de Rota no Mapa do App
+          Traçar Linha de Rota no Mapa do App
         </button>
       </div>
     `;
