@@ -207,20 +207,17 @@ const App = {
   },
 
   applyAppLogo(logoKey) {
-    const logos = {
-      mucura: './assets/icons/mucura-192.png',
-      selo: './assets/icons/selo-192.png'
-    };
-    const key = logos[logoKey] ? logoKey : 'mucura';
-    const src = logos[key];
+    const key = logoKey === 'selo' ? 'selo' : 'mucura';
     this.currentAppLogo = key;
 
     document.querySelectorAll('.mucura-logo-img').forEach((img) => {
-      img.src = src;
+      const size = img.dataset.logoSize || '96';
+      img.src = `./assets/icons/logo_${key}-${size}.png`;
     });
-    document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach((lnk) => {
-      lnk.href = src.replace('./', '');
-    });
+    const fav = document.querySelector('link[rel="icon"]');
+    if (fav) fav.href = `assets/icons/logo_${key}-32.png`;
+    const apple = document.querySelector('link[rel="apple-touch-icon"]');
+    if (apple) apple.href = `assets/icons/logo_${key}-192.png`;
   },
 
   toggleAppLogo() {
