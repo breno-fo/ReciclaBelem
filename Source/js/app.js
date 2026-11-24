@@ -51,6 +51,11 @@ const App = {
       document.body.classList.add('embed-mode');
     }
 
+    // Aplica o modo de visualização imediatamente para nunca exibir Dashboard indevidamente
+    const savedMode = localStorage.getItem('reciclaBelem_view_mode') || 'user';
+    const initialMode = urlRole || savedMode;
+    this.setAppRoleMode(initialMode, { skipSave: isEmbed });
+
     this.updateClock();
     setInterval(() => this.updateClock(), 15000);
 
@@ -58,27 +63,43 @@ const App = {
     this.startBatteryDrain();
     this.startNetworkOscillation();
 
-    // 1. Inicializa o Banco de Dados
-    await ReciclaDB.init();
+    // 1. Inicializa o Banco de Dados com proteção
+    try {
+      await ReciclaDB.init();
+    } catch (err) {
+      console.error('Erro ao inicializar banco:', err);
+    }
     this.updateSyncBadge();
 
     // 2. Renderiza Filtros e Checkboxes do Admin
-    this.renderMaterialFilterChips();
-    this.renderAdminMaterialCheckboxes();
+    try {
+      this.renderMaterialFilterChips();
+      this.renderAdminMaterialCheckboxes();
+    } catch (err) {
+      console.error('Erro ao renderizar filtros:', err);
+    }
 
-    // 3. Inicializa o Mapa Leaflet centrado em Belém
-    this.initMap();
+    // 3. Inicializa o Mapa Leaflet centrado em Belém (com proteção caso Leaflet não tenha carregado)
+    try {
+      if (typeof L !== 'undefined') {
+        this.initMap();
+      }
+    } catch (err) {
+      console.error('Erro ao inicializar mapa:', err);
+    }
 
     // 4. Configura Eventos de Busca Unificada (Pontos + Lugares)
     const searchInput = document.getElementById('search-input');
-    searchInput.addEventListener('input', (e) => {
-      this.handleSearchInput(e.target.value);
-    });
-    searchInput.addEventListener('focus', () => {
-      if (this.searchQuery.trim().length > 0) {
-        this.renderSearchSuggestions();
-      }
-    });
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        this.handleSearchInput(e.target.value);
+      });
+      searchInput.addEventListener('focus', () => {
+        if (this.searchQuery.trim().length > 0) {
+          this.renderSearchSuggestions();
+        }
+      });
+    }
     document.addEventListener('click', (e) => {
       const wrap = document.getElementById('header-search-wrap');
       if (wrap && !wrap.contains(e.target)) {
@@ -87,13 +108,12 @@ const App = {
     });
 
     // 5. Renderiza todas as seções e inicializa arraste da gaveta de pontos
-    this.renderAll();
+    try {
+      this.renderAll();
+    } catch (err) {
+      console.error('Erro ao renderizar seções:', err);
+    }
     this.initPointsDrawerDrag();
-
-    // 6. Aplica modo de visualização (Somente Usuário, Somente Admin ou Lado a Lado)
-    const savedMode = localStorage.getItem('reciclaBelem_view_mode') || 'user';
-    const initialMode = urlRole || savedMode;
-    this.setAppRoleMode(initialMode, { skipSave: isEmbed });
 
     if (isEmbed && urlRole === 'admin') {
       this.switchTab('admin');
@@ -542,7 +562,7 @@ const App = {
     }
 
     try {
-      const cache = await caches.open('recicla-belem-offline-v4');
+      const cache = await caches.open('recicla-belem-offline-v6');
 
       // 1. Garante os arquivos principais do app no cache offline
       const shellUrls = ['./', './index.html', './manifest.json', './css/styles.css', './js/db.js', './js/icons.js', './js/app.js', './data/database.json'];
@@ -738,11 +758,10 @@ const App = {
     if (!container) return;
 
     const chips = [
-      { slug: 'todos', label: 'Todos', emoji: '🌍' },
+      { slug: 'todos', label: 'Todos' },
       ...Object.entries(ReciclaIcons.materialMeta).map(([slug, m]) => ({
         slug,
-        label: m.label,
-        emoji: m.emoji
+        label: m.label
       }))
     ];
 
@@ -757,7 +776,7 @@ const App = {
         class="filter-chip ${isActive ? 'active' : ''}"
         onclick="App.setMaterialFilter('${c.slug}')"
       >
-        <span>${c.emoji}</span>
+        <span class="filter-icon">${c.slug === 'todos' ? ReciclaIcons.recycleSVG(20) : ReciclaIcons.getMaterialIcon(c.slug, 20)}</span>
         <span>${c.label}</span>
       </button>
     `;
@@ -1335,7 +1354,7 @@ const App = {
         <article class="guide-card">
           <div class="guide-card-header">
             <div class="guide-title-group">
-              <span style="width:14px;height:14px;border-radius:50%;background:${g.colorHex || '#10B981'};display:inline-block;"></span>
+              ${ReciclaIcons.getMaterialIcon(g.slug, 32)}
               <h4 style="font-size:0.96rem;font-weight:800;">${this.escapeHtml(g.name)}</h4>
             </div>
             <span class="guide-color-pill" style="background:${g.bgSoft || '#ECFDF5'};color:${g.colorHex || '#059669'};border:1px solid ${g.colorHex || '#10B981'}40;">
@@ -1422,7 +1441,7 @@ const App = {
         ([slug, m]) => `
       <label class="checkbox-item">
         <input type="checkbox" name="pt-mat" value="${slug}" />
-        <span>${m.emoji} ${m.label}</span>
+        <span class="checkbox-label">${ReciclaIcons.getMaterialIcon(slug, 20)} ${m.label}</span>
       </label>
     `
       )

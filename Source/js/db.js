@@ -741,33 +741,6 @@ const DEFAULT_DB = {
       "imageUrl": "https://s2-g1.glbimg.com/0dPLrPt2NDiR-nTR6L7FyL-FwEQ=/1600x0/filters:format(jpeg)/https://i.s3.glbimg.com/v1/AUTH_59edd422c0c84a879bd37670ae4f538a/internal_photos/bs/2025/h/r/3IynfIQcCc54l16R3YJg/whatsapp-image-2025-03-28-at-10.54.09.jpeg",
       "sourceUrl": "https://g1.globo.com/pa/para/noticia/2026/06/24/coleta-seletiva-chega-a-batista-campos-saiba-quais-materiais-podem-ser-reciclados.ghtml",
       "isAuto": true
-    },
-    {
-      "id": "news-1",
-      "title": "Belém amplia rede de Ecopontos para reciclagem de eletrônicos e óleo",
-      "category": "Infraestrutura",
-      "date": "23 Nov 2026",
-      "author": "Equipe ReciclaBelém",
-      "featured": false,
-      "summary": "Novos coletores nos bairros de Nazaré, Umarizal e Marco agora recebem pequenos aparelhos eletrônicos, cabos e óleo de cozinha armazenado em garrafas PET."
-    },
-    {
-      "id": "news-2",
-      "title": "Mutirão Limpa Igarapé acontece neste sábado na Cidade Velha e Ver-o-Peso",
-      "category": "Evento Comunitário",
-      "date": "21 Nov 2026",
-      "author": "Rede Voluntária Amazônia Limpa",
-      "featured": false,
-      "summary": "Voluntários e cooperativas se reúnem a partir das 8h para coleta de plásticos nas margens da Baía do Guajará e oficina gratuita de compostagem doméstica."
-    },
-    {
-      "id": "news-3",
-      "title": "Saiba como preparar suas embalagens em menos de 30 segundos",
-      "category": "Educação Ambiental",
-      "date": "18 Nov 2026",
-      "author": "Guia ReciclaBelém",
-      "featured": false,
-      "summary": "Não é preciso lavar com sabão! Basta esvaziar todo o resto de líquido ou alimento e passar a água do enxágue da louça para evitar mau cheiro e insetos."
     }
   ]
 };
@@ -800,11 +773,35 @@ window.ReciclaDB = {
       try {
         const parsed = JSON.parse(saved);
         if (parsed && Array.isArray(parsed.points)) {
+          let changed = false;
+          if (parsed.points.length === 0) {
+            parsed.points = JSON.parse(JSON.stringify(DEFAULT_DB.points));
+            changed = true;
+          }
+          if (!Array.isArray(parsed.materialsGuide) || parsed.materialsGuide.length === 0) {
+            parsed.materialsGuide = JSON.parse(JSON.stringify(DEFAULT_DB.materialsGuide));
+            changed = true;
+          }
+          if (!Array.isArray(parsed.incentives) || parsed.incentives.length === 0) {
+            parsed.incentives = JSON.parse(JSON.stringify(DEFAULT_DB.incentives));
+            changed = true;
+          }
+
+          const mockedIds = new Set(['news-1', 'news-2', 'news-3']);
+          const cleanedNews = (parsed.news || []).filter((n) => !mockedIds.has(n.id));
+          if (cleanedNews.length !== (parsed.news || []).length) {
+            parsed.news = cleanedNews;
+            changed = true;
+          }
+
           const hasAutoNews = (parsed.news || []).some((n) => n.isAuto || String(n.id).startsWith('gnews-'));
           if (!hasAutoNews) {
             const autoDefaults = DEFAULT_DB.news.filter((n) => n.isAuto || String(n.id).startsWith('gnews-'));
-            const existingManual = (parsed.news || []).map((n) => ({ ...n, featured: false }));
-            parsed.news = [...autoDefaults, ...existingManual];
+            parsed.news = [...autoDefaults, ...(parsed.news || [])];
+            changed = true;
+          }
+
+          if (changed) {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
           }
           this.data = parsed;
