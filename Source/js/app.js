@@ -199,7 +199,7 @@ const App = {
       } else {
         this.maybePromptOfflineMap(500);
       }
-    }, 5000);
+    }, 1800);
   },
 
   applyAppLogo(logoKey) {
@@ -1621,7 +1621,7 @@ const App = {
     const sorted = [...newsList].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
 
     container.innerHTML = sorted
-      .map((n, index) => {
+      .map((n) => {
         const cover = n.imageUrl
           ? `<img class="local-story-cover" src="${this.escapeHtml(n.imageUrl)}" alt="" loading="lazy" onerror="this.hidden=true" />`
           : '';
@@ -1630,7 +1630,7 @@ const App = {
           ? `<a href="${this.escapeHtml(n.sourceUrl)}" target="_blank" rel="noopener noreferrer">Ler na fonte <span aria-hidden="true">↗</span></a>`
           : '';
         return `
-          <article class="local-story ${index === 0 ? 'lead-story' : ''}">
+          <article class="local-story lead-story">
             ${cover}
             <div class="local-story-body">
               <div class="local-story-meta">
@@ -1640,12 +1640,72 @@ const App = {
               </div>
               <h3>${this.escapeHtml(n.title)}</h3>
               <p>${this.escapeHtml(n.summary)}</p>
-              <footer><span>${source}</span>${sourceLink}</footer>
+              <div class="news-card-actions">
+                <button type="button" class="news-read-more-btn" onclick="App.openNewsReader('${this.escapeHtml(n.id)}')">
+                  Ler matéria completa
+                </button>
+                <footer><span>${source}</span>${sourceLink}</footer>
+              </div>
             </div>
           </article>
         `;
       })
       .join('');
+  },
+
+  openNewsReader(newsId) {
+    const n = (ReciclaDB.data?.news || []).find((item) => item.id === newsId);
+    if (!n) return;
+
+    const content = document.getElementById('news-reader-content');
+    if (!content) return;
+
+    const coverHtml = n.imageUrl
+      ? `<img class="news-reader-cover" src="${this.escapeHtml(n.imageUrl)}" alt="" onerror="this.hidden=true" />`
+      : '';
+    const rawBody = (n.fullText || n.summary || '').trim();
+    const paragraphsHtml = rawBody
+      .split(/\n{2,}/)
+      .filter(Boolean)
+      .map((p) => `<p>${this.escapeHtml(p)}</p>`)
+      .join('');
+
+    const sourceBtnHtml = n.sourceUrl
+      ? `<a class="btn btn-primary" href="${this.escapeHtml(n.sourceUrl)}" target="_blank" rel="noopener noreferrer" style="flex:1;">Ler na fonte ↗</a>`
+      : '';
+
+    content.innerHTML = `
+      <div class="news-reader-scroll">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;">
+          <div class="local-story-meta">
+            ${n.featured ? '<strong>Destaque</strong>' : ''}
+            <span>${this.escapeHtml(n.category)}</span>
+            <span>${this.escapeHtml(n.date)}</span>
+          </div>
+          <button type="button" class="icon-btn" onclick="App.closeNewsReader()" aria-label="Fechar notícia">✕</button>
+        </div>
+        ${coverHtml}
+        <h3 id="news-reader-title" style="font-size:1.15rem;line-height:1.28;font-weight:800;color:var(--emerald-950);margin-bottom:6px;">
+          ${this.escapeHtml(n.title)}
+        </h3>
+        <div style="font-size:0.74rem;font-weight:700;color:var(--emerald-700);margin-bottom:12px;">
+          Fonte: ${this.escapeHtml(n.author || 'Portal de Notícias')}
+        </div>
+        <div class="news-reader-body">
+          ${paragraphsHtml}
+        </div>
+      </div>
+      <div class="news-reader-footer">
+        ${sourceBtnHtml}
+        <button type="button" class="btn btn-secondary" onclick="App.closeNewsReader()">Fechar</button>
+      </div>
+    `;
+
+    this.showUtilitySheet('news-reader-modal');
+  },
+
+  closeNewsReader() {
+    this.hideUtilitySheet('news-reader-modal');
   },
 
   /* ========================================================================

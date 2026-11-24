@@ -23,7 +23,7 @@
   <!-- Estilos do Design System Verde Clean -->
   <link rel="stylesheet" href="css/styles.css?v=20261124h" />
   <link rel="stylesheet" href="css/mobile.css" />
-  <link rel="stylesheet" href="css/content-refresh.css" />
+  <link rel="stylesheet" href="css/content-refresh.css?v=20261124i" />
   <link rel="stylesheet" href="css/map-refresh.css?v=20261124c" />
 </head>
 <body data-tab="mapa">
@@ -192,13 +192,17 @@
         </div>
       </div>
 
-      <!-- Splash Screen de Abertura do App Android (5s com Mascote Mucura) -->
-      <div class="app-splash-screen" id="app-splash-screen">
-        <div class="splash-logo-box">
-          <img class="splash-mucura-img" src="./assets/icons/logo_mucura_splash-192.png" alt="Mascote Mucura ReciclaBelém" />
+      <!-- Abertura do aplicativo -->
+      <div class="app-splash-screen" id="app-splash-screen" role="status" aria-label="Abrindo ReciclaBelém">
+        <div class="splash-content">
+          <div class="splash-logo-box">
+            <img class="splash-mucura-img" src="./assets/icons/logo_mucura_splash-192.png" alt="Mucura, mascote do ReciclaBelém" />
+          </div>
+          <h2><img src="./assets/brand-wordmark.svg" alt="ReciclaBelém" /></h2>
+          <p>Mapa de coleta seletiva</p>
+          <div class="splash-progress" aria-hidden="true"><span></span></div>
         </div>
-        <h2>ReciclaBelém</h2>
-        <p>Carregando pontos de coleta...</p>
+        <span class="splash-place">BELÉM · PARÁ</span>
       </div>
 
       <!-- Cabeçalho Principal do App -->
@@ -992,6 +996,13 @@
         </div>
       </div>
 
+      <!-- ==============================================================
+           MODAL 5: LEITOR DE NOTÍCIA COMPLETA
+           ============================================================== -->
+      <div class="modal-backdrop" id="news-reader-modal" onclick="if (event.target === this) App.closeNewsReader()">
+        <div class="modal-sheet news-reader-sheet" id="news-reader-content" role="dialog" aria-modal="true" aria-labelledby="news-reader-title"></div>
+      </div>
+
       <!-- Toast de Feedback Rápido -->
       <div class="toast-notification" id="app-toast" role="status"></div>
 
@@ -1002,8 +1013,8 @@
   <script src="./vendor/leaflet/leaflet.js"></script>
 
   <!-- Scripts do Aplicativo -->
-  <script src="js/db.js?v=20261124g"></script>
+  <script src="js/db.js?v=20261124i"></script>
   <script src="js/icons.js?v=20261124g"></script>
-  <script src="js/app.js?v=20261124h"></script>
+  <script src="js/app.js?v=20261124i"></script>
 </body>
 </html>
