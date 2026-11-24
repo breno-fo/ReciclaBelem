@@ -561,6 +561,54 @@
       ],
       "status": "ativo",
       "description": "Coleta solidária de móveis, eletrodomésticos, roupas, brinquedos, utensílios e outros itens. Agendamento de retirada pelo telefone (91) 98170-8721."
+    },
+    {
+      "id": "pt-32",
+      "name": "Ponto Instituto Descarte Correto",
+      "neighborhood": "Marco",
+      "address": "Travessa Barão do Triunfo, 4596",
+      "hours": "Seg a Sex • 08:00 - 17:00",
+      "phone": "",
+      "lat": -1.43481,
+      "lng": -48.45942,
+      "materials": [
+        "eletronicos",
+        "pilhas"
+      ],
+      "status": "ativo",
+      "description": "Ponto fixo do Instituto Descarte Correto. Recebe lixo eletrônico (celulares, computadores, cabos, periféricos), pilhas e baterias."
+    },
+    {
+      "id": "pt-33",
+      "name": "Ponto Boulevard Shopping Belém (E-lixo)",
+      "neighborhood": "Reduto",
+      "address": "Av. Visconde de Souza Franco, 776 (Piso G1)",
+      "hours": "Todos os dias • 10:00 - 22:00",
+      "phone": "",
+      "lat": -1.44633,
+      "lng": -48.48972,
+      "materials": [
+        "eletronicos",
+        "pilhas"
+      ],
+      "status": "ativo",
+      "description": "Ponto de coleta permanente de lixo eletrônico no Piso G1 do Boulevard Shopping Belém (celulares, carregadores, fones, pilhas e pequenos eletrônicos)."
+    },
+    {
+      "id": "pt-34",
+      "name": "Ponto Shopping Bosque Grão-Pará (E-lixo)",
+      "neighborhood": "Val-de-Cães",
+      "address": "Av. Centenário, 1052",
+      "hours": "Todos os dias • 10:00 - 22:00",
+      "phone": "",
+      "lat": -1.39012,
+      "lng": -48.46515,
+      "materials": [
+        "eletronicos",
+        "pilhas"
+      ],
+      "status": "ativo",
+      "description": "Ponto de coleta de resíduos eletrônicos de pequeno e médio porte e ações de Descarte Consciente no Shopping Bosque Grão-Pará."
     }
   ],
   "materialsGuide": [
