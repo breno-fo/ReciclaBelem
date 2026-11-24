@@ -40,6 +40,7 @@ const App = {
 
   // Estado de Localização do Usuário
   userLocation: null, // { lat, lng, label }
+  geoWatchId: null,
   mapClickMode: null, // null | 'setUserLoc' | 'pickAdminCoords'
 
   async init() {
@@ -202,23 +203,25 @@ const App = {
   },
 
   setAppRoleMode(mode, opts = {}) {
-    const validModes = ['user', 'admin', 'split'];
+    const validModes = ['user', 'admin', 'split', 'dev'];
     const targetMode = validModes.includes(mode) ? mode : 'user';
 
     if (!opts.skipSave) {
       localStorage.setItem('reciclaBelem_view_mode', targetMode);
     }
 
-    document.body.classList.remove('role-user', 'role-admin', 'split-mode');
+    document.body.classList.remove('role-user', 'role-admin', 'role-dev', 'split-mode');
 
     const btnUser = document.getElementById('btn-role-user');
     const btnAdmin = document.getElementById('btn-role-admin');
     const btnSplit = document.getElementById('btn-role-split');
+    const btnDev = document.getElementById('btn-role-dev');
     const btnFull = document.getElementById('btn-mode-full');
 
     if (btnUser) btnUser.classList.toggle('active', targetMode === 'user');
     if (btnAdmin) btnAdmin.classList.toggle('active', targetMode === 'admin');
     if (btnSplit) btnSplit.classList.toggle('active', targetMode === 'split');
+    if (btnDev) btnDev.classList.toggle('active', targetMode === 'dev');
 
     if (targetMode === 'split') {
       document.body.classList.remove('fullscreen-mode');
@@ -243,11 +246,19 @@ const App = {
 
     if (targetMode === 'user') {
       document.body.classList.add('role-user');
-      if (this.currentTab === 'admin') {
+      if (this.currentTab === 'admin' || this.currentTab === 'dev') {
         this.switchTab('mapa');
       }
     } else if (targetMode === 'admin') {
       document.body.classList.add('role-admin');
+      if (this.currentTab === 'dev') {
+        this.switchTab('mapa');
+      }
+    } else if (targetMode === 'dev') {
+      document.body.classList.add('role-dev');
+      if (this.currentTab === 'admin') {
+        this.switchTab('dev');
+      }
     }
 
     setTimeout(() => {
@@ -694,18 +705,40 @@ const App = {
     } catch (e) {}
   },
 
-  denyLocationPermission() {
+  stopGpsTracking() {
+    if (this.geoWatchId !== null && navigator.geolocation && navigator.geolocation.clearWatch) {
+      navigator.geolocation.clearWatch(this.geoWatchId);
+      this.geoWatchId = null;
+    }
     this.userLocation = null;
+    if (this.mapClickMode === 'setUserLoc') {
+      this.mapClickMode = null;
+    }
+    if (this.userMarker && this.map) {
+      this.map.removeLayer(this.userMarker);
+      this.userMarker = null;
+    }
+    if (this.routeLine && this.map) {
+      this.map.removeLayer(this.routeLine);
+      this.routeLine = null;
+    }
+  },
+
+  denyLocationPermission() {
+    this.stopGpsTracking();
     this.updateGpsPill('denied');
     this.closeLocationModal();
-    this.showToast('📍 GPS não ativo. Toque em "GPS não ativo" se quiser ativar depois.');
+    this.renderMapAndPoints();
+    this.showToast('GPS não ativo. Captura de localização interrompida.');
   },
 
   requestBrowserGeolocation() {
     this.closeLocationModal();
     if (!navigator.geolocation) {
+      this.stopGpsTracking();
       this.updateGpsPill('denied');
-      this.showToast('GPS não suportado neste navegador.');
+      this.renderMapAndPoints();
+      this.showToast('GPS não suportado neste aparelho.');
       return;
     }
 
@@ -715,15 +748,25 @@ const App = {
         const lat = Number(pos.coords.latitude.toFixed(5));
         const lng = Number(pos.coords.longitude.toFixed(5));
         this.setUserLocation(lat, lng, 'GPS ativo');
-      },
-      (err) => {
-        if (err && err.code === 1) {
-          this.updateGpsPill('denied');
-          this.showToast('Permissão de GPS negada. Você pode simular ou escolher no mapa.');
-        } else {
-          this.showToast('PC sem GPS ou sinal indisponível. Simulando posição em Belém!');
-          this.useSimulatedBelemLocation();
+
+        if (this.geoWatchId === null && navigator.geolocation.watchPosition) {
+          this.geoWatchId = navigator.geolocation.watchPosition(
+            (wPos) => {
+              const wLat = Number(wPos.coords.latitude.toFixed(5));
+              const wLng = Number(wPos.coords.longitude.toFixed(5));
+              this.userLocation = { lat: wLat, lng: wLng, label: 'GPS ativo' };
+              if (this.userMarker) this.userMarker.setLatLng([wLat, wLng]);
+            },
+            () => {},
+            { enableHighAccuracy: true, maximumAge: 10000 }
+          );
         }
+      },
+      () => {
+        this.stopGpsTracking();
+        this.updateGpsPill('denied');
+        this.renderMapAndPoints();
+        this.showToast('GPS não ativo. Permissão negada ou sinal indisponível.');
       },
       { enableHighAccuracy: true, timeout: 7000 }
     );
@@ -731,8 +774,9 @@ const App = {
 
   useSimulatedBelemLocation() {
     this.closeLocationModal();
-    // Praça da República - Centro de Belém
+    // Praça da República - Centro de Belém (exclusivo do Modo Dev)
     this.setUserLocation(-1.4539, -48.4934, 'GPS ativo');
+    this.switchTab('mapa');
   },
 
   enableClickToSetUserLocation() {

@@ -44,6 +44,9 @@
         <button class="toolbar-btn" id="btn-role-split" onclick="App.setAppRoleMode('split')">
           📱⚙️ Lado a Lado
         </button>
+        <button class="toolbar-btn" id="btn-role-dev" onclick="App.setAppRoleMode('dev')">
+          🛠️ Modo Dev
+        </button>
       </div>
       <button class="toolbar-btn" id="btn-mode-full" onclick="App.toggleFullscreen()">
         🖥️ Tela Cheia
@@ -455,6 +458,31 @@
         </section>
 
         <!-- ==============================================================
+             ABA 5: MODO DEV (FERRAMENTAS DE DESENVOLVEDOR)
+             ============================================================== -->
+        <section class="tab-view" id="tab-dev">
+          <div class="page-container">
+            <div style="background:#fff;border:1px solid var(--border-subtle);border-radius:16px;padding:14px;">
+              <h2 style="font-size:1rem;font-weight:800;color:var(--emerald-900);margin-bottom:4px;">Modo Dev</h2>
+              <p style="font-size:0.75rem;color:var(--text-secondary);">Ferramentas de teste e simulação exclusivas para desenvolvimento</p>
+            </div>
+
+            <div style="background:#fff;border:1px solid var(--border-subtle);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px;">
+              <h3 style="font-size:0.88rem;font-weight:800;color:var(--emerald-900);">Simulação de Localização (GPS)</h3>
+              <p style="font-size:0.76rem;color:var(--text-secondary);line-height:1.45;">
+                Simule a posição do usuário no Centro de Belém (Praça da República) para testar ordenação por distância e rotas no PC.
+              </p>
+              <button class="btn btn-primary" onclick="App.useSimulatedBelemLocation()">
+                Simular localização no Centro de Belém
+              </button>
+              <button class="btn btn-secondary" onclick="App.denyLocationPermission()">
+                Desativar captura de GPS (GPS não ativo)
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==============================================================
              ABA 4: DASHBOARD DO OPERADOR (ADMIN)
              ============================================================== -->
         <section class="tab-view" id="tab-admin">
@@ -805,6 +833,16 @@
           </span>
           <span>Dashboard</span>
         </button>
+
+        <button class="nav-item" id="nav-item-dev" data-tab="dev" onclick="App.switchTab('dev')">
+          <span class="nav-icon-pill">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="16 18 22 12 16 6"/>
+              <polyline points="8 6 2 12 8 18"/>
+            </svg>
+          </span>
+          <span>Modo Dev</span>
+        </button>
       </nav>
 
       <!-- Barra de Gesto Inferior do Android (Voltar à Tela Inicial) -->
@@ -834,13 +872,10 @@
           </div>
           <div style="display:flex;flex-direction:column;gap:8px;">
             <button class="btn btn-primary" onclick="App.requestBrowserGeolocation()">
-              📍 Permitir durante o uso do app (GPS Real)
-            </button>
-            <button class="btn btn-secondary" onclick="App.useSimulatedBelemLocation()">
-              🏛️ Simular localização no Centro de Belém (Teste PC)
+              Permitir durante o uso do app
             </button>
             <button class="btn btn-secondary" onclick="App.enableClickToSetUserLocation()">
-              👆 Escolher minha posição clicando no mapa
+              Escolher minha posição clicando no mapa
             </button>
             <button class="btn" style="background:transparent;color:var(--text-muted);" onclick="App.denyLocationPermission()">
               Não permitir agora

@@ -152,7 +152,10 @@ body.embed-mode .phone-frame {
 }
 
 /* Separação de Papéis: Usuário Final (3 abas) vs Operador Admin (4 abas) */
-body.role-user #nav-item-admin {
+body.role-user #nav-item-admin,
+body.role-user #nav-item-dev,
+body.role-admin #nav-item-dev,
+body.role-dev #nav-item-admin {
   display: none;
 }
 
