@@ -128,10 +128,21 @@ const App = {
     }
     this.updateOfflineButtonState();
 
-    // 9. Se for embed Admin (Lado a Lado), já abre direto no Dashboard sem Launcher
-    if (isEmbed && urlRole === 'admin') {
+    // 9. Se for embed Admin (Lado a Lado) ou app instalado (PWA standalone / APK Capacitor), abre direto no app
+    const isNativeOrStandalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true ||
+      !!window.Capacitor;
+
+    if ((isEmbed && urlRole === 'admin') || isNativeOrStandalone) {
       const launcher = document.getElementById('android-launcher');
       if (launcher) launcher.classList.remove('active');
+      if (isNativeOrStandalone && !sessionStorage.getItem('recicla_loc_prompted')) {
+        setTimeout(() => {
+          this.openLocationModal();
+          sessionStorage.setItem('recicla_loc_prompted', 'true');
+        }, 450);
+      }
     }
   },
 
@@ -439,20 +450,33 @@ const App = {
     }, delayMs);
   },
 
-  openOfflineMapModal() {
+  async openOfflineMapModal() {
     const net = this.isUsingMobileData();
     const alertEl = document.getElementById('offline-network-alert');
     const confirmBtn = document.getElementById('btn-confirm-offline-dl');
     const progressWrap = document.getElementById('offline-progress-wrap');
     const actionsWrap = document.getElementById('offline-modal-actions');
+    const sizeEl = document.getElementById('offline-pack-size-label');
 
     if (progressWrap) progressWrap.style.display = 'none';
     if (actionsWrap) actionsWrap.style.display = 'flex';
 
+    let sizeMB = 7.2;
+    try {
+      const metaRes = await fetch('./data/belem-map-pack.meta.json', { cache: 'no-store' });
+      if (metaRes.ok) {
+        const meta = await metaRes.json();
+        if (meta && meta.sizeMB) sizeMB = meta.sizeMB;
+      }
+    } catch (e) {}
+    const sizeLabel = `${String(sizeMB).replace('.', ',')} MB`;
+    this._offlinePackSizeMB = sizeMB;
+    if (sizeEl) sizeEl.textContent = sizeLabel;
+
     if (alertEl) {
       if (net.isCellular) {
         alertEl.className = 'offline-network-alert cellular';
-        alertEl.innerHTML = `⚠️ <strong>Você está usando ${net.label}.</strong><br/>Deseja baixar o mapa offline usando seus dados móveis? (~18,4 MB)`;
+        alertEl.innerHTML = `⚠️ <strong>Você está usando ${net.label}.</strong><br/>Deseja baixar o mapa de Belém, Icoaraci e Outeiro usando seus dados móveis? (${sizeLabel})`;
       } else {
         alertEl.className = 'offline-network-alert wifi';
         alertEl.innerHTML = `📶 <strong>Conectado via ${net.label}.</strong><br/>Sem consumo da sua franquia de dados móveis.`;
@@ -462,11 +486,11 @@ const App = {
     if (confirmBtn) {
       const alreadyDone = !!localStorage.getItem('reciclaBelem_offline_map_v1');
       if (alreadyDone) {
-        confirmBtn.textContent = '🔄 Atualizar Mapa Offline (~18,4 MB)';
+        confirmBtn.textContent = `🔄 Atualizar Mapa Offline (${sizeLabel})`;
       } else {
         confirmBtn.textContent = net.isCellular
-          ? '📶 Sim, baixar com Dados Móveis (~18,4 MB)'
-          : '⬇️ Baixar Mapa Offline (~18,4 MB)';
+          ? `📶 Sim, baixar com Dados Móveis (${sizeLabel})`
+          : `⬇️ Baixar Mapa Offline (${sizeLabel})`;
       }
     }
 
@@ -483,17 +507,8 @@ const App = {
     const isSaved = !!localStorage.getItem('reciclaBelem_offline_map_v1');
     btn.classList.toggle('is-downloaded', isSaved);
     if (isSaved) {
-      btn.title = 'Mapa offline salvo no aparelho (clique para atualizar)';
+      btn.title = 'Mapa offline (Belém, Icoaraci e Outeiro) salvo no aparelho';
     }
-  },
-
-  lonLatToTile(lon, lat, zoom) {
-    const x = Math.floor(((lon + 180) / 360) * Math.pow(2, zoom));
-    const y = Math.floor(
-      ((1 - Math.log(Math.tan((lat * Math.PI) / 180) + 1 / Math.cos((lat * Math.PI) / 180)) / Math.PI) / 2) *
-        Math.pow(2, zoom)
-    );
-    return { x, y };
   },
 
   async startOfflineMapDownload() {
@@ -503,57 +518,120 @@ const App = {
     const progressLabel = document.getElementById('offline-progress-label');
     const actionsWrap = document.getElementById('offline-modal-actions');
 
-    if (actionsWrap) actionsWrap.style.display = 'none';
-    if (progressWrap) progressWrap.style.display = 'block';
-
-    // Monta lista de tiles reais de Belém (zoom 12 e 13) para salvar em cache
-    const urls = ['./index.html', './css/styles.css', './js/db.js', './js/icons.js', './js/app.js', './data/database.json'];
-    const center = ReciclaDB.data?.meta?.defaultCenter || { lat: -1.4558, lng: -48.4898 };
-    [12, 13].forEach((z) => {
-      const t = this.lonLatToTile(center.lng, center.lat, z);
-      for (let dx = -1; dx <= 1; dx++) {
-        for (let dy = -1; dy <= 1; dy++) {
-          urls.push(`https://tile.openstreetmap.de/${z}/${t.x + dx}/${t.y + dy}.png`);
-        }
-      }
-    });
-
-    let completed = 0;
-    const total = urls.length;
-    let cache = null;
-    try {
-      cache = await caches.open('recicla-belem-offline-v3');
-    } catch (e) {}
-
-    for (const url of urls) {
-      try {
-        if (cache) {
-          const res = await fetch(url);
-          if (res && res.ok) await cache.put(url, res);
-        } else {
-          await new Promise((r) => setTimeout(r, 40));
-        }
-      } catch (e) {}
-
-      completed++;
-      const pct = Math.round((completed / total) * 100);
+    const setProgress = (pct, label) => {
       if (progressBar) progressBar.style.width = `${pct}%`;
       if (progressPct) progressPct.textContent = `${pct}%`;
-      if (progressLabel) {
-        progressLabel.textContent = pct < 100 ? 'Baixando mapa de Belém...' : 'Concluído!';
-      }
+      if (progressLabel && label) progressLabel.textContent = label;
+    };
+
+    if (actionsWrap) actionsWrap.style.display = 'none';
+    if (progressWrap) progressWrap.style.display = 'block';
+    setProgress(2, 'Conectando ao pacote de Belém, Icoaraci e Outeiro...');
+
+    if (!('caches' in window)) {
+      if (actionsWrap) actionsWrap.style.display = 'flex';
+      if (progressWrap) progressWrap.style.display = 'none';
+      this.showToast('⚠️ Para salvar o mapa offline, abra via http://localhost (INICIAR_APP.bat) ou HTTPS.');
+      return;
     }
 
-    localStorage.setItem(
-      'reciclaBelem_offline_map_v1',
-      JSON.stringify({ downloadedAt: new Date().toISOString(), sizeMB: 18.4 })
-    );
-    this.updateOfflineButtonState();
+    try {
+      const cache = await caches.open('recicla-belem-offline-v4');
 
-    setTimeout(() => {
-      this.dismissOfflineModal();
-      this.showToast('✅ Mapa de Belém (~18,4 MB) salvo para uso offline!');
-    }, 350);
+      // 1. Garante os arquivos principais do app no cache offline
+      const shellUrls = ['./', './index.html', './manifest.json', './css/styles.css', './js/db.js', './js/icons.js', './js/app.js', './data/database.json'];
+      await Promise.all(
+        shellUrls.map(async (u) => {
+          try {
+            const r = await fetch(u);
+            if (r && r.ok) await cache.put(u, r);
+          } catch (e) {}
+        })
+      );
+
+      // 2. Baixa o pacote binario unico com os 501 tiles de Belem, Icoaraci e Outeiro (zoom 12-15)
+      const packRes = await fetch('./data/belem-map-pack.bin');
+      if (!packRes.ok) throw new Error(`HTTP ${packRes.status} ao baixar pacote do mapa`);
+
+      const totalBytes = Number(packRes.headers.get('content-length')) || 0;
+      let arrayBuffer;
+
+      if (packRes.body && typeof packRes.body.getReader === 'function') {
+        const reader = packRes.body.getReader();
+        const chunks = [];
+        let received = 0;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(value);
+          received += value.byteLength;
+          if (totalBytes > 0) {
+            const dlPct = Math.min(70, Math.round((received / totalBytes) * 70));
+            const mbNow = (received / (1024 * 1024)).toFixed(1).replace('.', ',');
+            const mbTot = (totalBytes / (1024 * 1024)).toFixed(1).replace('.', ',');
+            setProgress(dlPct, `Baixando mapa (${mbNow} / ${mbTot} MB)...`);
+          }
+        }
+        const combined = new Uint8Array(received);
+        let pos = 0;
+        for (const c of chunks) {
+          combined.set(c, pos);
+          pos += c.byteLength;
+        }
+        arrayBuffer = combined.buffer;
+      } else {
+        arrayBuffer = await packRes.arrayBuffer();
+      }
+
+      setProgress(72, 'Desempacotando mapa no aparelho...');
+
+      // 3. Le o cabecalho binario [4 bytes uint32 LE][JSON index][PNGs] e grava no CacheStorage
+      const view = new DataView(arrayBuffer);
+      const headerLen = view.getUint32(0, true);
+      const headerText = new TextDecoder().decode(new Uint8Array(arrayBuffer, 4, headerLen));
+      const tilesIndex = JSON.parse(headerText);
+      const dataStart = 4 + headerLen;
+
+      const batchSize = 25;
+      for (let i = 0; i < tilesIndex.length; i += batchSize) {
+        const batch = tilesIndex.slice(i, i + batchSize);
+        await Promise.all(
+          batch.map((t) => {
+            const slice = arrayBuffer.slice(dataStart + t.offset, dataStart + t.offset + t.length);
+            const tileUrl = `https://tile.openstreetmap.de/${t.z}/${t.x}/${t.y}.png`;
+            const tileRes = new Response(slice, {
+              status: 200,
+              headers: { 'Content-Type': 'image/png' }
+            });
+            return cache.put(tileUrl, tileRes);
+          })
+        );
+        const unpackPct = 72 + Math.round(((i + batch.length) / tilesIndex.length) * 28);
+        setProgress(Math.min(100, unpackPct), `Salvando mapa offline (${Math.min(i + batch.length, tilesIndex.length)}/${tilesIndex.length} blocos)...`);
+      }
+
+      const sizeMB = this._offlinePackSizeMB || Number((arrayBuffer.byteLength / (1024 * 1024)).toFixed(1));
+      localStorage.setItem(
+        'reciclaBelem_offline_map_v1',
+        JSON.stringify({
+          downloadedAt: new Date().toISOString(),
+          sizeMB,
+          tileCount: tilesIndex.length,
+          region: 'Belém, Icoaraci e Outeiro'
+        })
+      );
+      this.updateOfflineButtonState();
+      setProgress(100, 'Mapa salvo com sucesso!');
+
+      setTimeout(() => {
+        this.dismissOfflineModal();
+        this.showToast(`✅ Mapa de Belém, Icoaraci e Outeiro (${tilesIndex.length} blocos, ${String(sizeMB).replace('.', ',')} MB) salvo offline!`);
+      }, 400);
+    } catch (err) {
+      if (actionsWrap) actionsWrap.style.display = 'flex';
+      if (progressWrap) progressWrap.style.display = 'none';
+      this.showToast('⚠️ Falha ao baixar o pacote offline. Tente novamente.');
+    }
   },
 
   requestBrowserGeolocation() {

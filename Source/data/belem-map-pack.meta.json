@@ -1,0 +1,19 @@
+{
+  "region": "Belém, Icoaraci e Outeiro",
+  "zooms": [
+    12,
+    13,
+    14,
+    15
+  ],
+  "bounds": {
+    "latMin": -1.49,
+    "latMax": -1.23,
+    "lngMin": -48.52,
+    "lngMax": -48.38
+  },
+  "tileCount": 501,
+  "bytes": 7519656,
+  "sizeMB": 7.2,
+  "builtAt": "2026-11-24T00:40:14Z"
+}

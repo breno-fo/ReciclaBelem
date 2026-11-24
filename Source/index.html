@@ -2,12 +2,17 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#064e3b" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="ReciclaBelém" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <title>ReciclaBelém — Mapa de Ecopontos, Guia & Dashboard</title>
 
-  <!-- Manifesto PWA para instalação no Android -->
+  <!-- Manifesto PWA para instalação no Android e iOS -->
   <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="assets/icons/reciclabelem-icon.svg" />
 
   <!-- Tipografia Moderna: Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -798,18 +803,18 @@
               </svg>
             </div>
             <h3 style="font-size:1.05rem;font-weight:800;color:var(--text-main);margin-bottom:6px;">
-              Baixar mapa de Belém para usar offline?
+              Baixar mapa de Belém, Icoaraci e Outeiro?
             </h3>
             <p style="font-size:0.81rem;color:var(--text-secondary);line-height:1.45;">
-              Salve o mapa e todos os <strong>29 pontos de reciclagem</strong> no seu aparelho para consultar e buscar ecopontos mesmo sem internet.
+              Salve o pacote completo do mapa (zoom 12 a 15) e todos os <strong>29 pontos de reciclagem</strong> no seu aparelho para usar mesmo sem internet.
             </p>
           </div>
 
-          <!-- Tamanho Estimado + Alerta de Dados Móveis -->
+          <!-- Tamanho Real do Pacote + Alerta de Dados Móveis -->
           <div class="offline-info-box">
             <div class="offline-size-row">
-              <span>📦 Tamanho estimado do pacote:</span>
-              <strong style="color:var(--emerald-800);">~18,4 MB</strong>
+              <span>📦 Pacote Belém + Icoaraci + Outeiro:</span>
+              <strong id="offline-pack-size-label" style="color:var(--emerald-800);">7,2 MB</strong>
             </div>
             <div class="offline-network-alert" id="offline-network-alert">
               <!-- Preenchido dinamicamente pelo JS (Dados Móveis vs Wi-Fi) -->
@@ -829,7 +834,7 @@
 
           <div id="offline-modal-actions" style="display:flex;flex-direction:column;gap:8px;">
             <button class="btn btn-primary" id="btn-confirm-offline-dl" onclick="App.startOfflineMapDownload()">
-              ⬇️ Baixar Mapa Offline (~18,4 MB)
+              ⬇️ Baixar Mapa Offline (7,2 MB)
             </button>
             <button class="btn btn-secondary" onclick="App.dismissOfflineModal()">
               Agora não (Lembrar depois)
