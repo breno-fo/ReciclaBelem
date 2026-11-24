@@ -740,8 +740,8 @@ body.fullscreen-mode .android-statusbar {
 /* Chips de Filtro de Materiais */
 .filter-strip {
   display: flex;
-  gap: 7px;
-  padding: 10px 14px;
+  gap: 6px;
+  padding: 7px 12px;
   overflow-x: auto;
   background: #fff;
   border-bottom: 1px solid var(--border-subtle);
@@ -757,17 +757,23 @@ body.fullscreen-mode .android-statusbar {
   border: 1px solid var(--border-subtle);
   background: var(--surface-bg);
   color: var(--text-secondary);
-  padding: 6px 12px;
+  padding: 4px 10px;
   border-radius: var(--radius-full);
-  font-size: 0.77rem;
+  font-size: 0.73rem;
   font-weight: 600;
   font-family: inherit;
   white-space: nowrap;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   transition: all 0.18s ease;
+}
+
+.filter-chip .material-pixel-icon,
+.filter-chip svg {
+  width: 16px;
+  height: 16px;
 }
 
 .filter-icon,

@@ -66,7 +66,8 @@
   text-align: left;
   font-weight: 700;
 }
-.filter-chip, .drawer-toggle, .route-close-btn { min-height: 44px; }
+.filter-chip { min-height: 34px; }
+.drawer-toggle, .route-close-btn { min-height: 44px; }
 #map .pin-selected .pin-head { background: #123d30; border-color: #d0f18f; }
 #map .pin-selected .pin-tail { border-top-color: #123d30; }
 
