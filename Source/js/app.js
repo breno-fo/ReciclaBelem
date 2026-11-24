@@ -351,7 +351,13 @@ const App = {
       zoomControl: false
     }).setView([center.lat, center.lng], center.zoom);
 
-    L.control.zoom({ position: 'topright' }).addTo(this.map);
+    L.control.zoom({
+      position: 'topright',
+      zoomInText: '<img class="map-zoom-icon" src="./assets/icons/zoom-in.svg" alt="+" />',
+      zoomOutText: '<img class="map-zoom-icon" src="./assets/icons/zoom-out.svg" alt="-" />',
+      zoomInTitle: 'Aumentar zoom',
+      zoomOutTitle: 'Diminuir zoom'
+    }).addTo(this.map);
 
     // Tiles OpenStreetMap.de (100% gratuitos, sem API key e funcionam tanto em localhost/https quanto em file://)
     const primaryTiles = L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
