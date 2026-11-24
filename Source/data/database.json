@@ -545,6 +545,22 @@
       ],
       "status": "ativo",
       "description": "Ecoponto do Parque São Joaquim. Recebe móveis inservíveis (sofás, armários, colchões e madeira) para destinação responsável."
+    },
+    {
+      "id": "pt-31",
+      "name": "Ponto Movimento República de Emaús",
+      "neighborhood": "Benguí",
+      "address": "Estrada do Benguí (Sede do Movimento República de Emaús)",
+      "hours": "Seg a Sex • 08:00 - 17:00 (Agendamento para retirada)",
+      "phone": "(91) 98170-8721",
+      "lat": -1.37137,
+      "lng": -48.45922,
+      "materials": [
+        "moveis",
+        "eletronicos"
+      ],
+      "status": "ativo",
+      "description": "Coleta solidária de móveis, eletrodomésticos, roupas, brinquedos, utensílios e outros itens. Agendamento de retirada pelo telefone (91) 98170-8721."
     }
   ],
   "materialsGuide": [

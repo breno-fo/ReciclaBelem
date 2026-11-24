@@ -2,13 +2,14 @@
  * ReciclaBelém - Service Worker para Modo Offline (PWA + Mapa em Cache)
  */
 
-const CACHE_NAME = 'recicla-belem-shell-v19';
+const CACHE_NAME = 'recicla-belem-shell-v20';
 const TILE_CACHE = 'recicla-belem-map-tiles';
 const TILE_HOSTS = new Set(['tile.openstreetmap.de', 'server.arcgisonline.com']);
 const APP_SHELL = [
   './',
   './index.html',
   './manifest.json',
+  './manifest-selo.json',
   './css/styles.css',
   './css/mobile.css',
   './css/content-refresh.css',
@@ -26,14 +27,18 @@ const APP_SHELL = [
   './js/app.js',
   './data/database.json',
   './assets/wallpaper.jpg',
-  './assets/icons/logo_mucura-32.png',
-  './assets/icons/logo_mucura-96.png',
-  './assets/icons/logo_mucura-192.png',
-  './assets/icons/logo_mucura-512.png',
-  './assets/icons/logo_selo-32.png',
-  './assets/icons/logo_selo-96.png',
-  './assets/icons/logo_selo-192.png',
-  './assets/icons/logo_selo-512.png',
+  './assets/icons/logo_mucura_round-32.png',
+  './assets/icons/logo_mucura_round-48.png',
+  './assets/icons/logo_mucura_round-96.png',
+  './assets/icons/logo_mucura_round-192.png',
+  './assets/icons/logo_mucura_round-512.png',
+  './assets/icons/logo_mucura_maskable-512.png',
+  './assets/icons/logo_selo_round-32.png',
+  './assets/icons/logo_selo_round-48.png',
+  './assets/icons/logo_selo_round-96.png',
+  './assets/icons/logo_selo_round-192.png',
+  './assets/icons/logo_selo_round-512.png',
+  './assets/icons/logo_selo_maskable-512.png',
   './assets/brand-wordmark.svg',
   './assets/materials/compact/plastico.webp',
   './assets/materials/compact/papel.webp',
