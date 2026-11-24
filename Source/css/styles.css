@@ -440,22 +440,15 @@ body.fullscreen-mode .android-statusbar {
 .brand-logo {
   width: 38px;
   height: 38px;
-  border-radius: 12px;
-  background: #022c22;
+  border-radius: 11px;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--emerald-200);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: none;
   overflow: hidden;
   padding: 0;
   flex-shrink: 0;
-  cursor: pointer;
-  transition: transform 0.15s ease;
-}
-
-.brand-logo:active {
-  transform: scale(0.92);
 }
 
 .mucura-logo-img {
@@ -2223,17 +2216,24 @@ body.fullscreen-mode .map-wrapper {
 }
 
 .splash-logo-box {
-  width: 78px;
-  height: 78px;
-  border-radius: 24px;
-  background: #022c22;
-  border: 2px solid rgba(167, 243, 208, 0.5);
+  width: 112px;
+  height: 112px;
+  border-radius: 26px;
+  background: transparent;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #a7f3d0;
   overflow: hidden;
   padding: 0;
+  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.35));
+}
+
+.splash-mucura-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }
 
 .app-splash-screen h2 {

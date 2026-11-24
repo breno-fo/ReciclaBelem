@@ -57,8 +57,7 @@ const App = {
       document.body.classList.add('embed-mode');
     }
 
-    // Aplica a logo salva (mucura ou selo) e o modo de visualização imediatamente
-    this.applyAppLogo(localStorage.getItem('reciclaBelem_app_logo_v1') || 'mucura');
+    // Aplica o modo de visualização imediatamente para nunca exibir Dashboard indevidamente
     const savedMode = localStorage.getItem('reciclaBelem_view_mode') || 'user';
     const savedSplitOnPhone = savedMode === 'split' && window.matchMedia('(max-width: 600px)').matches;
     const initialMode = urlRole || (savedSplitOnPhone ? 'user' : savedMode);
@@ -169,9 +168,6 @@ const App = {
       if (e.key === 'reciclaBelem_battery_start_ts') {
         this.updateBatteryUI();
       }
-      if (e.key === 'reciclaBelem_app_logo_v1' && e.newValue) {
-        this.applyAppLogo(e.newValue);
-      }
     });
 
     // 8. Registra Service Worker para suporte Offline
@@ -203,7 +199,7 @@ const App = {
       } else {
         this.maybePromptOfflineMap(500);
       }
-    }, 650);
+    }, 5000);
   },
 
   applyAppLogo(logoKey) {
@@ -211,13 +207,15 @@ const App = {
     this.currentAppLogo = key;
 
     document.querySelectorAll('.mucura-logo-img').forEach((img) => {
-      const size = img.dataset.logoSize || '96';
-      img.src = `./assets/icons/logo_${key}-${size}.png`;
+      const size = img.dataset.logoSize || '48';
+      img.src = `./assets/icons/logo_${key}_round-${size}.png`;
     });
     const fav = document.querySelector('link[rel="icon"]');
-    if (fav) fav.href = `assets/icons/logo_${key}-32.png`;
+    if (fav) fav.href = `assets/icons/logo_${key}_round-32.png`;
     const apple = document.querySelector('link[rel="apple-touch-icon"]');
-    if (apple) apple.href = `assets/icons/logo_${key}-192.png`;
+    if (apple) apple.href = `assets/icons/logo_${key}_round-192.png`;
+    const manifest = document.querySelector('link[rel="manifest"]');
+    if (manifest) manifest.href = key === 'selo' ? 'manifest-selo.json' : 'manifest.json';
   },
 
   toggleAppLogo() {

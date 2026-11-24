@@ -2,7 +2,7 @@
  * ReciclaBelém - Service Worker para Modo Offline (PWA + Mapa em Cache)
  */
 
-const CACHE_NAME = 'recicla-belem-shell-v20';
+const CACHE_NAME = 'recicla-belem-shell-v21';
 const TILE_CACHE = 'recicla-belem-map-tiles';
 const TILE_HOSTS = new Set(['tile.openstreetmap.de', 'server.arcgisonline.com']);
 const APP_SHELL = [
@@ -47,7 +47,8 @@ const APP_SHELL = [
   './assets/materials/compact/eletronicos.webp',
   './assets/materials/compact/oleo.webp',
   './assets/materials/compact/pilhas.webp',
-  './assets/materials/compact/organicos.webp'
+  './assets/materials/compact/organicos.webp',
+  './assets/materials/compact/moveis.webp'
 ];
 
 self.addEventListener('install', (event) => {
