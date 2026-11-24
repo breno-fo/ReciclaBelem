@@ -157,7 +157,7 @@ body.role-user #nav-item-admin {
 }
 
 body.role-user .bottom-nav {
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
 }
 
 .admin-title-tag {
@@ -1729,8 +1729,8 @@ body.fullscreen-mode .map-wrapper {
   background: #ffffff;
   border-top: 1px solid var(--border-subtle);
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  padding: 6px 8px;
+  grid-template-columns: repeat(5, 1fr);
+  padding: 6px 6px;
   flex-shrink: 0;
   z-index: 30;
 }
@@ -1745,15 +1745,16 @@ body.fullscreen-mode .map-wrapper {
   justify-content: center;
   gap: 3px;
   font-family: inherit;
-  font-size: 0.71rem;
+  font-size: 0.67rem;
   font-weight: 700;
+  white-space: nowrap;
   cursor: pointer;
   border-radius: 14px;
   transition: all 0.2s ease;
 }
 
 .nav-icon-pill {
-  padding: 4px 16px;
+  padding: 4px 12px;
   border-radius: var(--radius-full);
   display: flex;
   align-items: center;
@@ -2261,4 +2262,84 @@ body.fullscreen-mode .android-gesture-bar {
   height: 18px;
   display: block;
   pointer-events: none;
+}
+
+/* Seção Sobre Nós (Equipe IEP & Missão) */
+.about-mission-card {
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 0 4px 14px rgba(6, 78, 59, 0.06);
+}
+
+.about-badge {
+  display: inline-block;
+  background: var(--emerald-50);
+  color: var(--emerald-800);
+  border: 1px solid var(--emerald-200);
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 999px;
+  margin-bottom: 10px;
+}
+
+.about-mission-card h2 {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--emerald-900);
+  margin-bottom: 8px;
+}
+
+.about-mission-card p {
+  font-size: 0.81rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.team-member-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface-soft, #f3f8f5);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 8px 10px;
+}
+
+.team-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #10b981, #064e3b);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.team-member-chip strong {
+  display: block;
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: var(--emerald-900);
+  line-height: 1.2;
+}
+
+.team-member-chip small {
+  display: block;
+  font-size: 0.65rem;
+  color: var(--text-muted);
 }

@@ -358,26 +358,17 @@
         </section>
 
         <!-- ==============================================================
-             ABA 2: GUIA DE RECICLAGEM (ONDE JOGAR & INCENTIVOS)
+             ABA 2: GUIA DE RECICLAGEM (ONDE JOGAR CADA MATERIAL)
              ============================================================== -->
         <section class="tab-view" id="tab-guia">
           <div class="page-container">
-            <div class="hero-incentive-card">
-              <h2>Por que reciclar em Belém? 🌿</h2>
-              <p>Separar seus resíduos secos e orgânicos protege nossos rios e canais, reduz alagamentos e gera renda digna para centenas de famílias de catadores na Amazônia.</p>
-            </div>
-
             <div>
-              <h3 style="font-size:0.92rem;font-weight:800;margin-bottom:10px;color:var(--emerald-900);">
-                💚 Incentivo & Impacto Positivo
-              </h3>
-              <div class="incentives-grid" id="incentives-container"></div>
-            </div>
-
-            <div>
-              <h3 style="font-size:0.92rem;font-weight:800;margin-bottom:10px;color:var(--emerald-900);">
-                🗑️ Onde Jogar Cada Material (Cores & Preparo)
-              </h3>
+              <h2 style="font-size:1.05rem;font-weight:800;color:var(--emerald-900);margin-bottom:2px;">
+                🗑️ Onde Jogar Cada Material
+              </h2>
+              <p style="font-size:0.77rem;color:var(--text-secondary);margin-bottom:12px;">
+                Cores da coleta seletiva (CONAMA), o que pode reciclar e como preparar em casa
+              </p>
               <div style="display:flex;flex-direction:column;gap:12px;" id="materials-guide-container"></div>
             </div>
           </div>
@@ -395,6 +386,71 @@
               </div>
             </div>
             <div style="display:flex;flex-direction:column;gap:12px;" id="news-list-container"></div>
+          </div>
+        </section>
+
+        <!-- ==============================================================
+             ABA 3.5: SOBRE NÓS, EQUIPE & INCENTIVO À RECICLAGEM
+             ============================================================== -->
+        <section class="tab-view" id="tab-sobre">
+          <div class="page-container">
+            <div class="about-mission-card">
+              <div class="about-badge">💻 IEP • Desenvolvimento de Sistemas</div>
+              <h2>Quem Somos & Nossa Missão 🌱</h2>
+              <p>
+                Somos estudantes de baixa renda do curso técnico em <strong>Desenvolvimento de Sistemas</strong> do
+                <strong>IEEP — Instituto Educacional do Estado do Pará</strong>, apaixonados por tecnologia e
+                comprometidos com o futuro sustentável da nossa cidade.
+              </p>
+              <p>
+                Criamos o <strong>ReciclaBelém</strong> para oferecer uma forma rápida, gratuita e acessível de
+                localizar pontos de descarte e ecopontos em Belém, Icoaraci e Outeiro — aproximando cidadãos,
+                cooperativas e educação ambiental.
+              </p>
+
+              <div class="team-grid">
+                <div class="team-member-chip">
+                  <span class="team-avatar">BO</span>
+                  <div>
+                    <strong>Breno Oliveira</strong>
+                    <small>Dev. de Sistemas • IEP</small>
+                  </div>
+                </div>
+                <div class="team-member-chip">
+                  <span class="team-avatar">JL</span>
+                  <div>
+                    <strong>Jefferson Luan</strong>
+                    <small>Dev. de Sistemas • IEP</small>
+                  </div>
+                </div>
+                <div class="team-member-chip">
+                  <span class="team-avatar">PA</span>
+                  <div>
+                    <strong>Pedro Arthur</strong>
+                    <small>Dev. de Sistemas • IEP</small>
+                  </div>
+                </div>
+                <div class="team-member-chip">
+                  <span class="team-avatar">LM</span>
+                  <div>
+                    <strong>Lucas Mariano</strong>
+                    <small>Dev. de Sistemas • IEP</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="hero-incentive-card">
+              <h2>Por que reciclar em Belém? 🌿</h2>
+              <p>Separar seus resíduos secos e orgânicos protege nossos rios e canais, reduz alagamentos e gera renda digna para centenas de famílias de catadores na Amazônia.</p>
+            </div>
+
+            <div>
+              <h3 style="font-size:0.92rem;font-weight:800;margin-bottom:10px;color:var(--emerald-900);">
+                💚 Incentivo & Impacto Positivo
+              </h3>
+              <div class="incentives-grid" id="incentives-container"></div>
+            </div>
           </div>
         </section>
 
@@ -724,6 +780,18 @@
             </svg>
           </span>
           <span>Notícias</span>
+        </button>
+
+        <button class="nav-item" data-tab="sobre" onclick="App.switchTab('sobre')">
+          <span class="nav-icon-pill">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </span>
+          <span>Sobre Nós</span>
         </button>
 
         <button class="nav-item" id="nav-item-admin" data-tab="admin" onclick="App.switchTab('admin')">
