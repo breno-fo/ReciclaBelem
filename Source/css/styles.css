@@ -450,7 +450,32 @@ body.fullscreen-mode .android-statusbar {
   border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
+.brand-titles {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.brand-wordmark-img {
+  display: none;
+  max-height: 26px;
+  max-width: 170px;
+  width: auto;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.brand-titles.has-wordmark-img .brand-wordmark-img {
+  display: block;
+}
+
+.brand-titles.has-wordmark-img h1 {
+  display: none;
+}
+
 .brand-titles h1 {
+  font-family: var(--brand-font, inherit);
   font-size: 1.15rem;
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -1206,10 +1231,10 @@ body.fullscreen-mode .map-wrapper {
 .mat-badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 3px 9px;
+  gap: 6px;
+  padding: 4px 10px;
   border-radius: var(--radius-full);
-  font-size: 0.71rem;
+  font-size: 0.78rem;
   font-weight: 700;
 }
 
