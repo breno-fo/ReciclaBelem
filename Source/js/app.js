@@ -506,6 +506,14 @@ const App = {
     this.hideUtilitySheet('privacy-modal');
   },
 
+  openDisqueEntulhoModal() {
+    this.showUtilitySheet('disque-entulho-modal');
+  },
+
+  closeDisqueEntulhoModal() {
+    this.hideUtilitySheet('disque-entulho-modal');
+  },
+
   showUtilitySheet(id) {
     const modal = document.getElementById(id);
     if (modal.classList.contains('open')) return;

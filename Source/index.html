@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="./vendor/leaflet/leaflet.css" />
 
   <!-- Estilos do Design System Verde Clean -->
-  <link rel="stylesheet" href="css/styles.css?v=20261124d" />
+  <link rel="stylesheet" href="css/styles.css?v=20261124f" />
   <link rel="stylesheet" href="css/mobile.css" />
   <link rel="stylesheet" href="css/content-refresh.css" />
   <link rel="stylesheet" href="css/map-refresh.css?v=20261124c" />
@@ -293,6 +293,11 @@
 
             <!-- Botões Flutuantes do Mapa -->
             <div class="map-floating-controls">
+              <button type="button" class="map-fab" id="btn-disque-entulho" onclick="App.openDisqueEntulhoModal()" aria-label="Disque-Entulho Belém (WhatsApp)" title="Disque-Entulho Belém (Coleta especial via WhatsApp)">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                </svg>
+              </button>
               <button type="button" class="map-fab" id="btn-offline-map" onclick="App.openOfflineMapModal()" aria-label="Baixar mapa de Belém para usar offline" title="Baixar mapa de Belém para usar offline">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -944,6 +949,49 @@
         </div>
       </div>
 
+      <!-- ==============================================================
+           MODAL 4: DISQUE-ENTULHO BELÉM (INTEGRAÇÃO WHATSAPP)
+           ============================================================== -->
+      <div class="modal-backdrop" id="disque-entulho-modal" onclick="if (event.target === this) App.closeDisqueEntulhoModal()">
+        <div class="modal-sheet privacy-sheet" role="dialog" aria-modal="true" aria-labelledby="disque-title">
+          <div class="sheet-handle"></div>
+          <div class="privacy-header">
+            <h2 id="disque-title">Disque-Entulho Belém</h2>
+            <p class="privacy-subtitle">Serviço Gratuito • SESAN / Prefeitura de Belém</p>
+          </div>
+
+          <div class="privacy-doc-scroll">
+            <h4>O que é o serviço?</h4>
+            <p>O <strong>Disque-Entulho</strong> é o serviço gratuito da Prefeitura de Belém (SESAN) para coleta programada de entulho ou restos de poda de <strong>até 1 m³</strong> (equivalente a uma caixa d'água de 1.000 litros), com prazo de atendimento de <strong>até 72 horas</strong> após o agendamento.</p>
+
+            <h4>Como solicitar (somente mensagem no WhatsApp)</h4>
+            <ul class="disque-steps-list">
+              <li><strong>Canal oficial:</strong> envie mensagem pelo WhatsApp para <strong>(91) 98405-3100</strong> (não atende ligação).</li>
+              <li><strong>Dados necessários:</strong> informe seu <strong>nome completo</strong>, <strong>endereço completo com ponto de referência</strong> e envie uma <strong>foto do material</strong> para avaliação do limite de 1 m³.</li>
+              <li><strong>Depósito correto:</strong> deixe o resíduo no local combinado <strong>apenas na data prevista</strong>, evitando deixar na via pública antes da hora.</li>
+            </ul>
+
+            <div class="disque-alert-box">
+              <strong>Descarte irregular:</strong> para denunciar descarte irregular de entulho nas ruas, acione a Guarda Municipal pelo <strong>153</strong>.
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;">
+            <a
+              class="btn btn-primary"
+              href="https://wa.me/5591984053100?text=Ol%C3%A1!%20Gostaria%20de%20solicitar%20a%20coleta%20gratuita%20do%20Disque-Entulho%20(at%C3%A9%201%20m%C2%B3).%0ANome%3A%20%0AEndere%C3%A7o%20e%20ponto%20de%20refer%C3%AAncia%3A%20%0A(Vou%20enviar%20a%20foto%20do%20material%20em%20seguida)"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Solicitar pelo WhatsApp (91) 98405-3100
+            </a>
+            <button type="button" class="btn btn-secondary" onclick="App.closeDisqueEntulhoModal()">
+              Fechar
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Toast de Feedback Rápido -->
       <div class="toast-notification" id="app-toast" role="status"></div>
 
@@ -956,6 +1004,6 @@
   <!-- Scripts do Aplicativo -->
   <script src="js/db.js"></script>
   <script src="js/icons.js?v=20261124c"></script>
-  <script src="js/app.js?v=20261124d"></script>
+  <script src="js/app.js?v=20261124f"></script>
 </body>
 </html>
