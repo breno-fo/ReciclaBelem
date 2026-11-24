@@ -391,18 +391,21 @@ const App = {
       zoomOutTitle: 'Diminuir zoom'
     }).addTo(this.map);
 
-    // Tiles OpenStreetMap.de (100% gratuitos, sem API key e funcionam tanto em localhost/https quanto em file://)
-    const primaryTiles = L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors',
-      maxZoom: 19
-    }).addTo(this.map);
+    // Tiles clean estilo mapa urbano moderno (ArcGIS World Street Map - gratuito, sem API key)
+    const primaryTiles = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+      {
+        attribution: 'Tiles &copy; Esri &mdash; OpenStreetMap contributors',
+        maxZoom: 19
+      }
+    ).addTo(this.map);
 
     let fallbackApplied = false;
     primaryTiles.on('tileerror', () => {
       if (fallbackApplied) return;
       fallbackApplied = true;
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles &copy; Esri &mdash; OpenStreetMap contributors',
+      L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
         maxZoom: 19
       }).addTo(this.map);
     });
@@ -571,7 +574,7 @@ const App = {
     }
 
     try {
-      const cache = await caches.open('recicla-belem-offline-v6');
+      const cache = await caches.open('recicla-belem-offline-v7');
 
       // 1. Garante os arquivos principais do app no cache offline
       const shellUrls = ['./', './index.html', './manifest.json', './css/styles.css', './js/db.js', './js/icons.js', './js/app.js', './data/database.json'];
@@ -633,10 +636,12 @@ const App = {
         await Promise.all(
           batch.map((t) => {
             const slice = arrayBuffer.slice(dataStart + t.offset, dataStart + t.offset + t.length);
-            const tileUrl = `https://tile.openstreetmap.de/${t.z}/${t.x}/${t.y}.png`;
+            const tileUrl = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/${t.z}/${t.y}/${t.x}`;
+            const bytes = new Uint8Array(slice);
+            const contentType = bytes[0] === 0x89 && bytes[1] === 0x50 ? 'image/png' : 'image/jpeg';
             const tileRes = new Response(slice, {
               status: 200,
-              headers: { 'Content-Type': 'image/png' }
+              headers: { 'Content-Type': contentType }
             });
             return cache.put(tileUrl, tileRes);
           })
@@ -1273,10 +1278,10 @@ const App = {
 
           <div class="point-actions" onclick="event.stopPropagation();">
             <button class="btn btn-secondary" onclick="App.previewRouteOnMap('${pt.id}')">
-              🗺️ Ver no Mapa
+              Ver no Mapa
             </button>
             <a class="btn btn-primary" href="${gmapsUrl}" target="_blank" rel="noopener noreferrer">
-              🧭 Navegar (Google Maps)
+              Navegar (Google Maps)
             </a>
           </div>
         </article>
@@ -1438,7 +1443,7 @@ const App = {
         <article class="incentive-card">
           <span class="incentive-tag">${this.escapeHtml(inc.tag || 'Sustentabilidade')}</span>
           <h4 class="incentive-title">${this.escapeHtml(inc.title)}</h4>
-          <div class="incentive-metric">⚡ ${this.escapeHtml(inc.metric)}</div>
+          <div class="incentive-metric">${this.escapeHtml(inc.metric)}</div>
           <p class="incentive-desc">${this.escapeHtml(inc.description)}</p>
         </article>
       `
