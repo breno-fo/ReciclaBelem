@@ -2319,11 +2319,6 @@ body.fullscreen-mode .android-gesture-bar {
   pointer-events: none;
 }
 
-/* Deixa o mapa base branco/clean (estilo Google Maps) mantendo marcadores com cores vibrantes */
-.leaflet-tile-pane {
-  filter: saturate(0.32) brightness(1.08) contrast(1.05);
-}
-
 /* Seção Sobre Nós (Equipe IEP & Missão) */
 .about-mission-card {
   background: #ffffff;

@@ -391,21 +391,18 @@ const App = {
       zoomOutTitle: 'Diminuir zoom'
     }).addTo(this.map);
 
-    // Tiles clean estilo mapa urbano moderno (ArcGIS World Street Map - gratuito, sem API key)
-    const primaryTiles = L.tileLayer(
-      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
-      {
-        attribution: 'Tiles &copy; Esri &mdash; OpenStreetMap contributors',
-        maxZoom: 19
-      }
-    ).addTo(this.map);
+    // Tiles OpenStreetMap.de (100% gratuitos, sem API key e funcionam tanto em localhost/https quanto em file://)
+    const primaryTiles = L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 19
+    }).addTo(this.map);
 
     let fallbackApplied = false;
     primaryTiles.on('tileerror', () => {
       if (fallbackApplied) return;
       fallbackApplied = true;
-      L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors',
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri &mdash; OpenStreetMap contributors',
         maxZoom: 19
       }).addTo(this.map);
     });
@@ -574,7 +571,7 @@ const App = {
     }
 
     try {
-      const cache = await caches.open('recicla-belem-offline-v7');
+      const cache = await caches.open('recicla-belem-offline-v9');
 
       // 1. Garante os arquivos principais do app no cache offline
       const shellUrls = ['./', './index.html', './manifest.json', './css/styles.css', './js/db.js', './js/icons.js', './js/app.js', './data/database.json'];
@@ -636,12 +633,10 @@ const App = {
         await Promise.all(
           batch.map((t) => {
             const slice = arrayBuffer.slice(dataStart + t.offset, dataStart + t.offset + t.length);
-            const tileUrl = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/${t.z}/${t.y}/${t.x}`;
-            const bytes = new Uint8Array(slice);
-            const contentType = bytes[0] === 0x89 && bytes[1] === 0x50 ? 'image/png' : 'image/jpeg';
+            const tileUrl = `https://tile.openstreetmap.de/${t.z}/${t.x}/${t.y}.png`;
             const tileRes = new Response(slice, {
               status: 200,
-              headers: { 'Content-Type': contentType }
+              headers: { 'Content-Type': 'image/png' }
             });
             return cache.put(tileUrl, tileRes);
           })
@@ -880,7 +875,7 @@ const App = {
         class="filter-chip ${isActive ? 'active' : ''}"
         onclick="App.setMaterialFilter('${c.slug}')"
       >
-        <span class="filter-icon">${c.slug === 'todos' ? ReciclaIcons.recycleSVG(20) : ReciclaIcons.getMaterialIcon(c.slug, 20)}</span>
+        <span class="filter-icon">${c.slug === 'todos' ? ReciclaIcons.recycleSVG(26) : ReciclaIcons.getMaterialIcon(c.slug, 26)}</span>
         <span>${c.label}</span>
       </button>
     `;
@@ -1458,7 +1453,7 @@ const App = {
         <article class="guide-card">
           <div class="guide-card-header">
             <div class="guide-title-group">
-              ${ReciclaIcons.getMaterialIcon(g.slug, 32)}
+              ${ReciclaIcons.getMaterialIcon(g.slug, 38)}
               <h4 style="font-size:0.96rem;font-weight:800;">${this.escapeHtml(g.name)}</h4>
             </div>
             <span class="guide-color-pill" style="background:${g.bgSoft || '#ECFDF5'};color:${g.colorHex || '#059669'};border:1px solid ${g.colorHex || '#10B981'}40;">
@@ -1545,7 +1540,7 @@ const App = {
         ([slug, m]) => `
       <label class="checkbox-item">
         <input type="checkbox" name="pt-mat" value="${slug}" />
-        <span class="checkbox-label">${ReciclaIcons.getMaterialIcon(slug, 20)} ${m.label}</span>
+        <span class="checkbox-label">${ReciclaIcons.getMaterialIcon(slug, 24)} ${m.label}</span>
       </label>
     `
       )

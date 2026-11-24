@@ -2,7 +2,7 @@
  * ReciclaBelém - Service Worker para Modo Offline (PWA + Mapa em Cache)
  */
 
-const CACHE_NAME = 'recicla-belem-offline-v7';
+const CACHE_NAME = 'recicla-belem-offline-v9';
 const APP_SHELL = [
   './',
   './index.html',
@@ -13,14 +13,14 @@ const APP_SHELL = [
   './js/app.js',
   './data/database.json',
   './assets/wallpaper.jpg',
-  './assets/materials/plastico.png',
-  './assets/materials/papel.png',
-  './assets/materials/vidro.png',
-  './assets/materials/metal.png',
-  './assets/materials/eletronicos.png',
-  './assets/materials/oleo.png',
-  './assets/materials/pilhas.png',
-  './assets/materials/organicos.png'
+  './assets/materials/compact/plastico.png',
+  './assets/materials/compact/papel.png',
+  './assets/materials/compact/vidro.png',
+  './assets/materials/compact/metal.png',
+  './assets/materials/compact/eletronicos.png',
+  './assets/materials/compact/oleo.png',
+  './assets/materials/compact/pilhas.png',
+  './assets/materials/compact/organicos.png'
 ];
 
 self.addEventListener('install', (event) => {

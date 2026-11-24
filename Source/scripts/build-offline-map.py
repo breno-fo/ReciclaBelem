@@ -34,7 +34,7 @@ def deg2num(lat_deg, lon_deg, zoom):
 
 
 def fetch_tile(z, x, y):
-    url = f"https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
+    url = f"https://tile.openstreetmap.de/{z}/{x}/{y}.png"
     req = urllib.request.Request(
         url,
         headers={
@@ -46,7 +46,7 @@ def fetch_tile(z, x, y):
             with urllib.request.urlopen(req, timeout=15) as resp:
                 if resp.status == 200:
                     data = resp.read()
-                    if data.startswith(b"\x89PNG") or data.startswith(b"\xff\xd8\xff"):
+                    if data.startswith(b"\x89PNG"):
                         return (z, x, y, data)
         except Exception:
             time.sleep(0.4 * (attempt + 1))
