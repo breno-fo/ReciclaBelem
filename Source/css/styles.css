@@ -438,9 +438,9 @@ body.fullscreen-mode .android-statusbar {
 }
 
 .brand-logo {
-  width: 38px;
-  height: 38px;
-  border-radius: 11px;
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
   background: transparent;
   display: flex;
   align-items: center;
@@ -449,6 +449,7 @@ body.fullscreen-mode .android-statusbar {
   overflow: hidden;
   padding: 0;
   flex-shrink: 0;
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.32));
 }
 
 .mucura-logo-img {
