@@ -22,8 +22,9 @@ Quando você autoriza o uso da localização no aplicativo, as coordenadas geogr
 
 ---
 
-## 3. Armazenamento e Não Compartilhamento
+## 3. Armazenamento, Verificação Local e Não Compartilhamento
 - **Processamento local em memória:** sua posição GPS é mantida **apenas na memória temporária da sessão atual** do aplicativo no seu próprio dispositivo.
+- **Verificação de mapa offline no aparelho:** o aplicativo pode consultar exclusivamente os dados locais do próprio app no dispositivo (`CacheStorage` e `localStorage`) para verificar se o pacote do mapa offline de Belém, Icoaraci e Outeiro já foi baixado e garantir o funcionamento sem internet. **Não** acessamos fotos, contatos, documentos ou quaisquer outros arquivos pessoais do celular.
 - **Zero envio para servidor próprio:** o ReciclaBelém **não envia, não grava e não mantém** sua localização em bancos de dados remotos nem em servidores de terceiros para fins comerciais, publicitários ou de rastreamento.
 - **Serviços externos sob demanda:**
   - Ao tocar em **"Ver Trajeto no Mapa (2D)"**, as coordenadas de origem e destino são enviadas diretamente pelo seu dispositivo à API pública do **OSRM** (`router.project-osrm.org`) apenas para calcular o caminho pelas ruas.

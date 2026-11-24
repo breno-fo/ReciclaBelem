@@ -873,8 +873,9 @@
             <h4>1. Finalidade do uso da localização</h4>
             <p>O <strong>ReciclaBelém</strong> utiliza suas coordenadas (latitude e longitude) exclusivamente para calcular a distância até os ecopontos, ordenar os mais próximos, traçar o trajeto 2D no mapa e preencher o ponto de partida caso você abra a navegação no Google Maps.</p>
 
-            <h4>2. Armazenamento e não compartilhamento</h4>
+            <h4>2. Armazenamento, verificação local e não compartilhamento</h4>
             <p>Sua localização fica <strong>apenas na memória temporária da sessão</strong> no seu aparelho. Nós <strong>não</strong> enviamos, não gravamos em banco de dados próprio e não vendemos ou compartilhamos sua posição para publicidade ou rastreamento. Não coletamos nome, CPF, e-mail ou histórico de deslocamento.</p>
+            <p>Alguns dados locais do próprio aplicativo no seu celular (<code>CacheStorage</code> e <code>localStorage</code>) podem ser acessados exclusivamente para verificar se o mapa offline já foi baixado e manter o funcionamento sem internet — sem qualquer acesso a fotos, arquivos pessoais ou contatos.</p>
 
             <h4>3. Serviços externos sob sua ação</h4>
             <p>Somente quando você solicita traçar uma rota 2D ou abrir o Google Maps para navegar/avaliar, as coordenadas são consultadas diretamente nos serviços de rota/mapa (<strong>OSRM</strong>, <strong>OpenStreetMap</strong> ou <strong>Google Maps</strong>), sujeitos às respectivas políticas.</p>
@@ -942,11 +943,16 @@
             </div>
           </div>
 
+          <!-- Mensagem estática (não clicável) quando o mapa já está baixado -->
+          <div class="offline-already-downloaded" id="offline-already-msg" style="display:none;" aria-live="polite">
+            O mapa de Belém, Icoaraci e Outeiro já foi baixado e está disponível no seu aparelho para uso offline.
+          </div>
+
           <div id="offline-modal-actions" style="display:flex;flex-direction:column;gap:8px;">
             <button class="btn btn-primary" id="btn-confirm-offline-dl" onclick="App.startOfflineMapDownload()">
-              ⬇️ Baixar Mapa Offline (7,2 MB)
+              Baixar mapa (7,2 MB)
             </button>
-            <button class="btn btn-secondary" onclick="App.dismissOfflineModal()">
+            <button class="btn btn-secondary" id="btn-dismiss-offline-dl" onclick="App.dismissOfflineModal()">
               Agora não
             </button>
           </div>
@@ -1015,6 +1021,6 @@
   <!-- Scripts do Aplicativo -->
   <script src="js/db.js?v=20261124i"></script>
   <script src="js/icons.js?v=20261124g"></script>
-  <script src="js/app.js?v=20261124i"></script>
+  <script src="js/app.js?v=20261124k"></script>
 </body>
 </html>

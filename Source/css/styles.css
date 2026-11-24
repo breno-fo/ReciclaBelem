@@ -2433,6 +2433,20 @@ body.fullscreen-mode .android-gesture-bar {
   line-height: 1.42;
 }
 
+.offline-already-downloaded {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.45;
+  pointer-events: none;
+  user-select: none;
+}
+
 /* Seção Sobre Nós (Equipe IEP & Missão) */
 .about-mission-card {
   background: #ffffff;

@@ -199,7 +199,7 @@ const App = {
       } else {
         this.maybePromptOfflineMap(500);
       }
-    }, 1800);
+    }, 3500);
   },
 
   applyAppLogo(logoKey) {
@@ -574,6 +574,30 @@ const App = {
     }, delayMs);
   },
 
+  async verifyOfflineMapCached() {
+    const hasFlag = !!localStorage.getItem('reciclaBelem_offline_map_v1');
+    if (!('caches' in window)) return hasFlag;
+
+    try {
+      const names = await caches.keys();
+      for (const name of names) {
+        if (name === 'recicla-belem-map-tiles' || name.startsWith('recicla-belem-offline-')) {
+          const c = await caches.open(name);
+          const keys = await c.keys();
+          const tileCount = keys.filter((req) => req.url.includes('tile.openstreetmap.') || req.url.includes('arcgisonline.com')).length;
+          if (tileCount >= 50) return true;
+        }
+      }
+      if (hasFlag) {
+        localStorage.removeItem('reciclaBelem_offline_map_v1');
+        this.updateOfflineButtonState();
+      }
+      return false;
+    } catch (e) {
+      return hasFlag;
+    }
+  },
+
   async openOfflineMapModal() {
     this.showUtilitySheet('offline-map-modal');
     const net = this.isUsingMobileData();
@@ -581,10 +605,10 @@ const App = {
     const confirmBtn = document.getElementById('btn-confirm-offline-dl');
     const progressWrap = document.getElementById('offline-progress-wrap');
     const actionsWrap = document.getElementById('offline-modal-actions');
+    const alreadyMsg = document.getElementById('offline-already-msg');
     const sizeEl = document.getElementById('offline-pack-size-label');
 
     if (progressWrap) progressWrap.style.display = 'none';
-    if (actionsWrap) actionsWrap.style.display = 'flex';
 
     let sizeMB = 7.2;
     try {
@@ -598,6 +622,18 @@ const App = {
     this._offlinePackSizeMB = sizeMB;
     if (sizeEl) sizeEl.textContent = sizeLabel;
 
+    const alreadyDone = await this.verifyOfflineMapCached();
+
+    if (alreadyDone) {
+      if (actionsWrap) actionsWrap.style.display = 'none';
+      if (alertEl) alertEl.hidden = true;
+      if (alreadyMsg) alreadyMsg.style.display = 'block';
+      return;
+    }
+
+    if (alreadyMsg) alreadyMsg.style.display = 'none';
+    if (actionsWrap) actionsWrap.style.display = 'flex';
+
     if (alertEl) {
       alertEl.hidden = net.isCellular === null;
       alertEl.className = 'offline-network-alert ' + (net.isCellular ? 'cellular' : 'wifi');
@@ -605,10 +641,8 @@ const App = {
     }
 
     if (confirmBtn) {
-      const alreadyDone = !!localStorage.getItem('reciclaBelem_offline_map_v1');
-      confirmBtn.textContent = (alreadyDone ? 'Atualizar mapa' : 'Baixar mapa') + ' (' + sizeLabel + ')';
+      confirmBtn.textContent = 'Baixar mapa (' + sizeLabel + ')';
     }
-
   },
 
   dismissOfflineModal() {
