@@ -74,6 +74,7 @@ button, input, select, textarea { font-family: inherit; }
   transform: translateY(-2%);
 }
 .splash-logo-box {
+  position: relative;
   width: 178px;
   height: 178px;
   padding: 0;
@@ -81,9 +82,21 @@ button, input, select, textarea { font-family: inherit; }
   border-radius: 30px;
   filter: drop-shadow(0 14px 13px #052b2280);
 }
-.splash-mucura-img { image-rendering: pixelated; }
+.splash-mucura-img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+.splash-mucura-wink { position: absolute; inset: 0; opacity: 0; }
+.app-splash-screen.open .splash-mucura-wink { animation: splash-wink 5s steps(1, end) both; }
+@keyframes splash-wink {
+  0%, 17%, 20%, 46%, 49%, 75%, 78%, 100% { opacity: 0; }
+  18%, 19%, 47%, 48%, 76%, 77% { opacity: 1; }
+}
 .app-splash-screen h2 { margin: 14px 0 0; }
 .app-splash-screen h2 img { display: block; width: 240px; max-width: 70vw; height: auto; image-rendering: pixelated; }
+.app-splash-screen.open h2 { animation: splash-wordmark-impact 5s ease-in-out both; transform-origin: center; }
+@keyframes splash-wordmark-impact {
+  0%, 17%, 20%, 46%, 49%, 75%, 78%, 100% { transform: none; }
+  18%, 47%, 76% { transform: translateY(3px) scale(1.035, .94); }
+  19%, 48%, 77% { transform: translateY(-1px) scale(.99, 1.025); }
+}
 .app-splash-screen p { margin-top: 9px; color: #d5e8d3; font-size: .9rem; font-weight: 600; letter-spacing: .01em; }
 .splash-progress {
   width: 92px;
@@ -100,7 +113,7 @@ button, input, select, textarea { font-family: inherit; }
   border-radius: inherit;
   background: #d8eea7;
   transform-origin: left;
-  animation: splash-progress 3.5s ease-out both;
+  animation: splash-progress 5s ease-out both;
 }
 .splash-place {
   position: absolute;
@@ -249,4 +262,9 @@ body:not([data-tab="mapa"]) #header-search-wrap { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
+body.native-apk .preview-toolbar,
+body.native-apk .android-launcher,
+body.native-apk .admin-only {
+  display: none !important;
 }

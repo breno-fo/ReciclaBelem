@@ -48,7 +48,9 @@ const App = {
     const params = new URLSearchParams(window.location.search);
     const isEmbed = params.get('embed') === '1';
     const urlRole = params.get('role'); // 'user' | 'admin' | 'split'
-    if (params.get('simulador') === '1') {
+    const isCapacitor = !!window.Capacitor;
+
+    if (!isCapacitor && params.get('simulador') === '1') {
       document.body.classList.add('simulator-mode');
       document.getElementById('android-launcher').classList.add('active');
     }
@@ -56,12 +58,16 @@ const App = {
     if (isEmbed) {
       document.body.classList.add('embed-mode');
     }
+    if (isCapacitor) {
+      document.body.classList.add('native-apk');
+    }
 
     // Aplica o modo de visualização imediatamente para nunca exibir Dashboard indevidamente
+    // No APK nativo (Capacitor), trava em 'user' para nunca expor o painel administrativo
     const savedMode = localStorage.getItem('reciclaBelem_view_mode') || 'user';
     const savedSplitOnPhone = savedMode === 'split' && window.matchMedia('(max-width: 600px)').matches;
-    const initialMode = urlRole || (savedSplitOnPhone ? 'user' : savedMode);
-    this.setAppRoleMode(initialMode, { skipSave: isEmbed || savedSplitOnPhone || !!urlRole });
+    const initialMode = isCapacitor ? 'user' : (urlRole || (savedSplitOnPhone ? 'user' : savedMode));
+    this.setAppRoleMode(initialMode, { skipSave: isEmbed || isCapacitor || savedSplitOnPhone || !!urlRole });
 
     if (document.body.classList.contains('simulator-mode') || window.matchMedia('(min-width: 601px)').matches) {
       this.updateClock();

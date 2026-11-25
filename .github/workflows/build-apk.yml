@@ -1,0 +1,89 @@
+name: Build ReciclaBelem User APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'Source/**'
+      - '.github/workflows/build-apk.yml'
+
+jobs:
+  build-apk:
+    name: Build Standalone User APK (Capacitor)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Stage Source assets into www and create Capacitor project
+        run: |
+          rm -rf www android dist
+          mkdir -p www dist
+          cp -r Source/* www/
+          rm -rf www/server.js www/INICIAR_APP.bat www/package.json www/package-lock.json www/scripts www/supabase
+
+          cat > capacitor.config.json <<'EOF'
+          {
+            "appId": "com.reciclabelem.app",
+            "appName": "ReciclaBelem",
+            "webDir": "www",
+            "server": {
+              "androidScheme": "https"
+            }
+          }
+          EOF
+
+          npm init -y
+          npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
+          npx cap add android
+
+      - name: Configure app icon, name and geolocation permissions
+        run: |
+          # Remove adaptive XMLs from Capacitor template so our custom PNG icons are used on Android 8+
+          rm -rf android/app/src/main/res/mipmap-anydpi-v26
+
+          for density in mdpi hdpi xhdpi xxhdpi; do
+            mkdir -p "android/app/src/main/res/mipmap-${density}"
+            cp Source/assets/icons/logo_selo_round-192.png "android/app/src/main/res/mipmap-${density}/ic_launcher.png"
+            cp Source/assets/icons/logo_selo_round-192.png "android/app/src/main/res/mipmap-${density}/ic_launcher_round.png"
+          done
+          mkdir -p android/app/src/main/res/mipmap-xxxhdpi
+          cp Source/assets/icons/logo_selo_round-512.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+          cp Source/assets/icons/logo_selo_round-512.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
+
+          # Set proper app name with accent
+          sed -i 's/ReciclaBelem/ReciclaBelém/g' android/app/src/main/res/values/strings.xml
+
+          # Add geolocation permissions to AndroidManifest.xml
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          if ! grep -q "ACCESS_FINE_LOCATION" "$MANIFEST"; then
+            sed -i 's|<uses-permission android:name="android.permission.INTERNET" />|<uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />|' "$MANIFEST"
+          fi
+
+      - name: Build Debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+          cp app/build/outputs/apk/debug/app-debug.apk ../dist/ReciclaBelem-Usuario.apk
+
+      - name: Upload ReciclaBelem-Usuario.apk artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ReciclaBelem-Usuario-APK
+          path: dist/ReciclaBelem-Usuario.apk
+          retention-days: 30
